@@ -5,12 +5,14 @@ import { Settings } from 'lucide-react';
 import { OverviewTab, ModelsTab, SimulatorTab, SourcesTab } from '../components/admin/OpsTabs';
 import UsersTab from '../components/admin/UsersTab';
 import AuditTab from '../components/admin/AuditTab';
+import LearningTab from '../components/admin/LearningTab';
 
 const TABS = [
   { key: 'overview', Component: OverviewTab },
   { key: 'users', Component: UsersTab },
   { key: 'sources', Component: SourcesTab },
   { key: 'models', Component: ModelsTab },
+  { key: 'learning', Component: LearningTab },
   { key: 'simulator', Component: SimulatorTab },
   { key: 'audit', Component: AuditTab },
 ];

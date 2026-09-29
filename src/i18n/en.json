@@ -146,7 +146,8 @@
       "sources": "Data sources",
       "models": "Models",
       "simulator": "Simulator",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "learning": "Learning loop"
     },
     "users": {
       "add": "Add user",
@@ -185,6 +186,26 @@
       "start": "Start",
       "stop": "Stop",
       "runs": "Replay runs"
+    },
+    "learning": {
+      "schedule": "Weekly evaluation schedule",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "every": "Every {{hours}} h",
+      "next_run": "Next run {{time}}",
+      "run_now": "Run evaluation now",
+      "running": "Cycle running…",
+      "retrain": "Retrain risk models",
+      "retrain_auto": "only if new verified data",
+      "retrain_always": "always",
+      "retrain_never": "never",
+      "stale": "Why the risk model would retrain",
+      "up_to_date": "Risk model is up to date with the verified data.",
+      "feedback": "Feedback collected",
+      "runs": "Evaluation cycles",
+      "flags": "Drift flags",
+      "no_flags": "No drift detected",
+      "no_runs": "No cycle has run yet."
     }
   },
   "risk": {

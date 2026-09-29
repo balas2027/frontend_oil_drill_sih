@@ -14,3 +14,10 @@ export const adminApi = {
   sources: () => apiClient.get('/admin/sources'),
   models: () => apiClient.get('/admin/models'),
 };
+
+export const learningApi = {
+  status: () => apiClient.get('/learning/status'),
+  runs: (limit = 20) => apiClient.get('/learning/runs', { params: { limit } }),
+  start: (retrain = 'auto') => apiClient.post('/learning/run', null, { params: { retrain } }),
+  updateSchedule: (body) => apiClient.patch('/learning/schedule', body),
+};

@@ -13,3 +13,23 @@ export function detailText(details) {
     )
     .join(' · ');
 }
+
+/** Metrics tracked by the learning loop (backend feedback_agent.snapshot_metrics). */
+export const METRIC_LABELS = {
+  extraction_f1_main: 'Extraction F1 (main set)',
+  extraction_f1_challenge: 'Extraction F1 (challenge set)',
+  advisor_pass_rate: 'Advisor benchmark pass rate',
+  advisor_citation_precision: 'Advisor citation precision',
+  risk_event_recall: 'Risk: events warned',
+  risk_warning_precision: 'Risk: warning+ precision',
+  risk_pr_auc_mud_loss: 'Risk PR-AUC mud loss',
+  risk_pr_auc_kick: 'Risk PR-AUC kick',
+};
+
+export const fmtMetric = (v) => (v == null ? '—' : Number(v).toFixed(3));
+
+/** Change since the previous cycle (null when either side is missing). */
+export function metricDelta(current, previous) {
+  if (current == null || previous == null) return null;
+  return Math.round((current - previous) * 10000) / 10000;
+}

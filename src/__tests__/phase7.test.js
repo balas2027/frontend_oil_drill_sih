@@ -11,7 +11,13 @@ import {
   projectToMap,
 } from '../components/dashboard/dashboardUtils';
 import { formatSyncTime } from '../store/uiStore';
-import { detailText, pct } from '../components/admin/adminUtils';
+import {
+  detailText,
+  fmtMetric,
+  metricDelta,
+  METRIC_LABELS,
+  pct,
+} from '../components/admin/adminUtils';
 
 /** Flatten nested translation objects to dotted keys. */
 function keys(obj, prefix = '') {
@@ -113,5 +119,15 @@ describe('offline + admin helpers', () => {
     expect(detailText(null)).toBe('');
     expect(pct(0.9167)).toBe('91.7%');
     expect(pct(null)).toBe('—');
+  });
+});
+
+describe('learning loop helpers', () => {
+  it('formats metrics and deltas between cycles', () => {
+    expect(fmtMetric(0.9714)).toBe('0.971');
+    expect(fmtMetric(null)).toBe('—');
+    expect(metricDelta(0.95, 1)).toBe(-0.05);
+    expect(metricDelta(0.9, null)).toBeNull();
+    expect(METRIC_LABELS.extraction_f1_main).toMatch(/Extraction/);
   });
 });
