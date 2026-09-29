@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertOctagon, AlertTriangle, Bell, Gauge, Volume2, VolumeX, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import {
+  AlertOctagon,
+  AlertTriangle,
+  Bell,
+  FileDown,
+  Gauge,
+  Volume2,
+  VolumeX,
+  X,
+} from 'lucide-react';
 import { useAuthStore, canActOnAlerts, isAdmin } from '../store/authStore';
 import { useMapStore } from '../store/mapStore';
 import { wellsApi } from '../api/wells';
-import { alertsApi, riskApi, simulatorApi } from '../api/risk';
+import { alertsApi, downloadBriefPdf, riskApi, simulatorApi } from '../api/risk';
 import { apiErrorMessage } from '../api/client';
 import { useWebSocket } from '../hooks/useWebSocket';
 import RiskRibbon from '../components/risk/RiskRibbon';
@@ -60,6 +70,8 @@ const matchesFilters = (a, f) =>
   (!f.level || a.level === f.level);
 
 export default function RiskAlerts() {
+  const { t } = useTranslation();
+  const [briefBusy, setBriefBusy] = useState(false);
   const user = useAuthStore((s) => s.user);
   const activeWellId = useMapStore((s) => s.activeWellId);
   const radiusKm = useMapStore((s) => s.radiusKm);
@@ -255,6 +267,17 @@ export default function RiskAlerts() {
     }
   };
 
+  const brief = async () => {
+    setBriefBusy(true);
+    try {
+      await downloadBriefPdf(wellId, radiusKm);
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Could not create the brief.'));
+    } finally {
+      setBriefBusy(false);
+    }
+  };
+
   const toggleSound = () => {
     setSoundOn((v) => {
       writeStored(SOUND_KEY, !v);
@@ -282,7 +305,7 @@ export default function RiskAlerts() {
                 <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Phase 6 · Risk & alert
                 agents
               </span>
-              <h2 className="text-xl font-bold text-royal-900 font-serif">Risk &amp; Alerts</h2>
+              <h2 className="text-xl font-bold text-royal-900 font-serif">{t('risk.title')}</h2>
               <p className="text-xs text-ink-600 mt-0.5">
                 Look-ahead risk from offset wells within {radiusKm} km and live drilling parameters.
                 Offset wells suggest - the drilling engineer decides.
@@ -342,8 +365,17 @@ export default function RiskAlerts() {
                 )}
                 Critical sound {soundOn ? 'on' : 'off'}
               </button>
+              <button
+                type="button"
+                onClick={brief}
+                disabled={!wellId || briefBusy}
+                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md border border-royal-700 bg-white text-[11px] text-royal-700 font-medium hover:bg-royal-100 disabled:opacity-50"
+              >
+                <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+                {briefBusy ? t('common.loading') : t('risk.brief_pdf')}
+              </button>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-                Synthetic demo data
+                {t('app.synthetic')}
               </span>
             </div>
           </div>

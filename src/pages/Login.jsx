@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { LANGUAGES } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { ShieldCheck, Lock, Mail, Compass, AlertCircle } from 'lucide-react';
 
@@ -15,6 +17,7 @@ export default function Login() {
   const [email, setEmail] = useState('admin@oil.in');
   const [password, setPassword] = useState('admin123');
   const { login, loading, error } = useAuthStore();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -39,43 +42,55 @@ export default function Login() {
             </div>
             <div>
               <span className="text-xs tracking-wider uppercase text-gold-500 font-semibold">
-                Oil India Limited
+                {t('app.org')}
               </span>
-              <h1 className="text-xl font-bold tracking-tight">eRTMAC - NWIS</h1>
+              <h1 className="text-xl font-bold tracking-tight">{t('app.name')}</h1>
             </div>
           </div>
 
           <div className="mt-12 space-y-4">
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-white leading-tight">
-              Nearby Wells Intelligence System
+              {t('app.full')}
             </h2>
-            <p className="text-royal-100 text-sm leading-relaxed">
-              Giving every drilling engineer the memory of every well ever drilled nearby - and
-              warning them before history repeats.
-            </p>
+            <p className="text-royal-100 text-sm leading-relaxed">{t('app.tagline')}</p>
           </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-royal-700/60 text-xs text-royal-100/80 space-y-1">
           <div className="flex items-center gap-2 text-gold-500 font-medium">
-            <ShieldCheck className="w-4 h-4" /> Decision Support System for Drilling Operations
+            <ShieldCheck className="w-4 h-4" aria-hidden="true" /> {t('login.decision_support')}
           </div>
           <p>© 2026 Oil India Limited. SIH Problem Statement 26121.</p>
         </div>
       </div>
 
       {/* Right Panel - Form */}
-      <div className="w-full md:w-7/12 p-8 md:p-16 flex items-center justify-center">
+      <div className="w-full md:w-7/12 p-8 md:p-16 flex items-center justify-center relative">
+        <label className="absolute top-4 right-4 text-xs flex items-center gap-1.5">
+          <span className="text-ink-600">{t('header.language')}</span>
+          <select
+            value={i18n.language}
+            onChange={(e) => i18n.changeLanguage(e.target.value)}
+            className="border border-line rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-royal-600 focus:outline-none"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-line p-8">
           <div className="mb-6">
-            <h3 className="text-xl font-bold text-royal-900">Sign in to NWIS Portal</h3>
-            <p className="text-xs text-ink-600 mt-1">
-              Enter your credentials to access the intelligence platform
-            </p>
+            <h2 className="text-xl font-bold text-royal-900">{t('login.title')}</h2>
+            <p className="text-xs text-ink-600 mt-1">{t('login.subtitle')}</p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
+            <div
+              role="alert"
+              className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2"
+            >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -83,12 +98,17 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-ink-900 mb-1">
-                Official Email Address
+              <label
+                htmlFor="login-email"
+                className="block text-xs font-semibold text-ink-900 mb-1"
+              >
+                {t('login.email')}
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-ink-600 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-ink-600 absolute left-3 top-3" aria-hidden="true" />
                 <input
+                  id="login-email"
+                  autoComplete="username"
                   type="email"
                   required
                   value={email}
@@ -100,10 +120,17 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-ink-900 mb-1">Password</label>
+              <label
+                htmlFor="login-password"
+                className="block text-xs font-semibold text-ink-900 mb-1"
+              >
+                {t('login.password')}
+              </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-ink-600 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-ink-600 absolute left-3 top-3" aria-hidden="true" />
                 <input
+                  id="login-password"
+                  autoComplete="current-password"
                   type="password"
                   required
                   value={password}
@@ -115,7 +142,7 @@ export default function Login() {
             </div>
 
             <div className="bg-royal-50 border border-royal-100 rounded-lg p-3 text-xs text-ink-600 space-y-1">
-              <span className="font-semibold text-royal-900">Demo accounts (one per role):</span>
+              <span className="font-semibold text-royal-900">{t('login.demo')}</span>
               {DEMO_ACCOUNTS.map(([role, email, pw]) => (
                 <button
                   key={role}
@@ -126,7 +153,7 @@ export default function Login() {
                   }}
                   className="w-full flex justify-between items-center text-left px-1.5 py-0.5 rounded hover:bg-royal-100"
                 >
-                  <span className="capitalize font-medium text-ink-900 w-16">{role}</span>
+                  <span className="font-medium text-ink-900 w-16">{t(`common.role.${role}`)}</span>
                   <code className="text-royal-700 font-mono">{email}</code>
                   <code className="text-ink-600 font-mono">{pw}</code>
                 </button>
@@ -138,7 +165,7 @@ export default function Login() {
               disabled={loading}
               className="w-full py-2.5 bg-royal-700 hover:bg-royal-900 text-white font-medium text-sm rounded-lg transition-colors shadow-sm disabled:opacity-50"
             >
-              {loading ? 'Authenticating...' : 'Sign In to Portal'}
+              {loading ? t('login.signing_in') : t('login.submit')}
             </button>
           </form>
         </div>

@@ -60,6 +60,8 @@ export const useAuthStore = create((set) => ({
 
   logout: () => {
     clearSession();
+    // Cached API responses (PWA offline cache) must not outlive the session
+    if (typeof caches !== 'undefined') caches.delete('nwis-api').catch(() => {});
     set({ user: null, token: null, isAuthenticated: false });
   },
 
@@ -72,7 +74,10 @@ export const useAuthStore = create((set) => ({
       // The client interceptor refreshes an expired access token transparently
       const res = await apiClient.get('/auth/me');
       set({ user: res.data, isAuthenticated: true, token: localStorage.getItem(TOKEN_KEY) });
-    } catch {
+    } catch (err) {
+      // No response = offline / API unreachable: keep the stored session so the
+      // PWA can show cached data. Only a rejection by the server ends the session.
+      if (!err?.response) return;
       clearSession();
       set({ user: null, token: null, isAuthenticated: false });
     }

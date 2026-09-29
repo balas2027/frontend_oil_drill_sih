@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useUiStore } from '../store/uiStore';
 
 const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const API_BASE_URL = rawBaseUrl.endsWith('/api/v1')
@@ -44,8 +45,14 @@ export function apiErrorMessage(err, fallback = 'Request failed.') {
   );
 }
 
-// Attach token to requests
+// Attach token to requests; refuse writes while offline (reads may come from the PWA cache)
 apiClient.interceptors.request.use((config) => {
+  const method = (config.method || 'get').toLowerCase();
+  if (method !== 'get' && typeof navigator !== 'undefined' && navigator.onLine === false) {
+    const err = new Error('You are offline - changes are disabled until the connection returns.');
+    err.response = { data: { error: { message: err.message } } };
+    return Promise.reject(err);
+  }
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -74,7 +81,10 @@ function redirectToLogin() {
 
 // Expired access token -> refresh once and retry; otherwise send to login
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    useUiStore.getState().markSynced();
+    return response;
+  },
   async (error) => {
     const { response, config } = error;
     const isAuthCall =

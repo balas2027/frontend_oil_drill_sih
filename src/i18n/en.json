@@ -1,0 +1,194 @@
+{
+  "app": {
+    "org": "Oil India Limited",
+    "name": "eRTMAC - NWIS",
+    "full": "Nearby Wells Intelligence System",
+    "tagline": "Giving every drilling engineer the memory of every well ever drilled nearby - and warning them before history repeats.",
+    "synthetic": "Synthetic demo data"
+  },
+  "nav": {
+    "menu": "Navigation menu",
+    "dashboard": "Dashboard",
+    "map": "Map & Nearby Wells",
+    "data": "Data Explorer",
+    "correlation": "Correlation",
+    "alerts": "Risk & Alerts",
+    "knowledge": "Ask NWIS & Search",
+    "lessons": "Lessons",
+    "documents": "Documents",
+    "admin": "Administration",
+    "open_menu": "Open navigation menu",
+    "close_menu": "Close navigation menu"
+  },
+  "header": {
+    "sign_out": "Sign Out",
+    "language": "Language",
+    "field_mode": "Field mode",
+    "field_mode_hint": "Larger text and touch targets for rig use",
+    "alerts_bell": "{{count}} active alerts",
+    "live": "Live",
+    "shortcuts": "Keyboard shortcuts"
+  },
+  "footer": {
+    "version": "eRTMAC-NWIS v1.0.0 — Decision Support System for Drilling Operations",
+    "notice": "Notice: Advisory system only. Rig supervisor retains final authority.",
+    "last_sync": "Last data sync {{time}}",
+    "never_synced": "Not synced yet"
+  },
+  "status": {
+    "title": "System status",
+    "online": "Connected",
+    "offline": "Offline",
+    "offline_banner": "Offline — showing data cached at {{time}}. Changes are disabled until the connection returns.",
+    "offline_banner_never": "Offline — no cached data yet. Reconnect to load data."
+  },
+  "a11y": {
+    "skip": "Skip to main content"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "search": "Search / Ask NWIS",
+    "go_dashboard": "Go to dashboard",
+    "go_map": "Go to map",
+    "go_alerts": "Go to risk & alerts",
+    "go_correlation": "Go to correlation",
+    "go_documents": "Go to documents",
+    "help": "Show this help",
+    "close": "Close"
+  },
+  "login": {
+    "title": "Sign in to NWIS Portal",
+    "subtitle": "Enter your credentials to access the intelligence platform",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "signing_in": "Signing in…",
+    "demo": "Demo accounts (synthetic dataset)",
+    "decision_support": "Decision Support System for Drilling Operations"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "save": "Save",
+    "cancel": "Cancel",
+    "open": "Open",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "download_pdf": "Download PDF",
+    "role": {
+      "admin": "Admin",
+      "reviewer": "Reviewer",
+      "engineer": "Engineer",
+      "viewer": "Viewer"
+    }
+  },
+  "dashboard": {
+    "eyebrow": "Command dashboard",
+    "title": "Command Dashboard",
+    "subtitle": "Nearby Wells Intelligence System — Upper Assam Basin demo data",
+    "kpi": {
+      "active_wells": "Active wells",
+      "active_wells_sub": "of {{total}} wells drilling",
+      "open_alerts": "Open alerts",
+      "verified_events": "Verified events",
+      "verified_events_sub": "of {{total}} events on record",
+      "documents": "Documents processed",
+      "documents_sub": "of {{total}} uploaded",
+      "offsets": "Offset wells in range",
+      "offsets_sub": "within {{radius}} km of the active well"
+    },
+    "active": {
+      "title": "Active well",
+      "choose": "Active well",
+      "depth": "Bit depth",
+      "no_live": "No live depth — start a replay or connect the rig feed",
+      "formation": "Formation",
+      "next_risk": "Next risky interval ahead",
+      "next_risk_none": "No elevated offset risk in the next 500 m",
+      "ahead": "{{m}} m ahead",
+      "highest_ahead": "Highest offset risk ahead (below watch level)",
+      "top_risks": "Top risks in the next 150 m",
+      "open_risk": "Open risk & alerts",
+      "brief": "Pre-spud brief (PDF)",
+      "td": "TD {{m}} m",
+      "path_risk": "Highest offset risk along the planned well path"
+    },
+    "alerts": {
+      "title": "Recent alerts",
+      "empty": "No alerts yet. They appear when the bit approaches depths where offset wells had problems.",
+      "all": "All alerts"
+    },
+    "map": {
+      "title": "Offset wells",
+      "radius": "{{radius}} km radius",
+      "open": "Open map",
+      "legend_active": "Active well",
+      "legend_offset": "Offset in range",
+      "legend_other": "Other wells"
+    },
+    "quick": {
+      "title": "Quick actions",
+      "ask": "Ask NWIS",
+      "upload": "Upload report",
+      "correlation": "Open correlation",
+      "map": "Map & nearby wells"
+    }
+  },
+  "admin": {
+    "eyebrow": "Administration",
+    "title": "Administration",
+    "subtitle": "Users and roles, data sources, models, KPIs, simulator and audit trail.",
+    "tabs": {
+      "overview": "KPIs",
+      "users": "Users & roles",
+      "sources": "Data sources",
+      "models": "Models",
+      "simulator": "Simulator",
+      "audit": "Audit log"
+    },
+    "users": {
+      "add": "Add user",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "active": "Active",
+      "last_activity": "Last activity",
+      "password": "Password (min 8 characters)",
+      "reset_password": "Reset password",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "create": "Create user",
+      "created": "User created",
+      "roles_help": "Viewer: read · Engineer: + acknowledge alerts, ask · Reviewer: + verify events, curate lessons · Admin: everything"
+    },
+    "audit": {
+      "user": "User",
+      "entity": "Entity",
+      "action": "Action",
+      "any": "Any",
+      "time": "Time",
+      "details": "Details",
+      "ip": "IP"
+    },
+    "models": {
+      "retrain": "Retrain risk models",
+      "retraining": "Training…",
+      "trained": "Trained",
+      "version": "Version",
+      "current": "current",
+      "evaluations": "Evaluation runs"
+    },
+    "simulator": {
+      "replayable": "Replayable wells",
+      "start": "Start",
+      "stop": "Stop",
+      "runs": "Replay runs"
+    }
+  },
+  "risk": {
+    "title": "Risk & Alerts",
+    "brief_pdf": "Pre-spud brief (PDF)"
+  }
+}

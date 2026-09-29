@@ -17,7 +17,8 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  /* Noto Sans Devanagari / Bengali cover Hindi and Assamese (Section 9 typography) */
+  font-family: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Bengali', sans-serif;
   background-color: #f4f7fe;
   color: #0f172a;
 }
@@ -68,5 +69,29 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .nwis-evidence-pulse {
     animation: none;
+  }
+}
+
+/* Visible keyboard focus everywhere (WCAG 2.1 AA, Section 11: focus outlines in royal-600) */
+:focus-visible {
+  outline: 2px solid #1d4fb8;
+  outline-offset: 2px;
+}
+
+/* Field mode (Section 9): larger text and touch targets, higher-contrast secondary text */
+html.field-mode body {
+  zoom: 1.15;
+}
+html.field-mode .text-ink-600 {
+  color: #334155;
+}
+html.field-mode button,
+html.field-mode select,
+html.field-mode a[role='button'] {
+  min-height: 32px;
+}
+@media print {
+  html.field-mode body {
+    zoom: 1;
   }
 }

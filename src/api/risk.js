@@ -8,7 +8,25 @@ export const riskApi = {
     apiClient.get(`/risk/${wellId}/pre-spud-brief`, { params: clean(params) }),
   model: () => apiClient.get('/risk/model'),
   train: () => apiClient.post('/risk/train'),
+  briefPdf: (wellId, params = {}) =>
+    apiClient.get(`/risk/${wellId}/pre-spud-brief.pdf`, {
+      params: clean(params),
+      responseType: 'blob',
+    }),
 };
+
+/** Fetch the pre-spud brief PDF (authenticated) and hand it to the browser as a download. */
+export async function downloadBriefPdf(wellId, radiusKm) {
+  const res = await riskApi.briefPdf(wellId, { radius_km: radiusKm });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `NWIS_pre-spud_brief_${wellId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
 
 export const alertsApi = {
   list: (params = {}) => apiClient.get('/alerts', { params: clean(params) }),
