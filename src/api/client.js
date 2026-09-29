@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-// Deployed backend (currently 500 - needs env vars configured on Vercel):
-// const API_BASE_URL = 'https://backend-oil-drill-sih.vercel.app/api/v1';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = rawBaseUrl.endsWith('/api/v1')
+  ? rawBaseUrl
+  : `${rawBaseUrl.replace(/\/+$/, '')}/api/v1`;
 
 export const TOKEN_KEY = 'nwis_token';
 export const REFRESH_KEY = 'nwis_refresh';
