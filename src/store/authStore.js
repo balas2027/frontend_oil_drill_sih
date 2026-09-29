@@ -18,6 +18,8 @@ function storedUser() {
 
 /** Role checks mirror the backend RBAC matrix. */
 export const canReview = (user) => ['reviewer', 'admin'].includes(user?.role);
+/** Engineers and above acknowledge / rate alerts; viewers only read. */
+export const canActOnAlerts = (user) => ['engineer', 'reviewer', 'admin'].includes(user?.role);
 export const isAdmin = (user) => user?.role === 'admin';
 
 export const useAuthStore = create((set) => ({

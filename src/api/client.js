@@ -9,6 +9,14 @@ export const TOKEN_KEY = 'nwis_token';
 export const REFRESH_KEY = 'nwis_refresh';
 export const USER_KEY = 'nwis_user';
 
+/** WebSocket URL for an API path (same host as the REST API, token in the query string). */
+export function wsUrl(path) {
+  const base = new URL(API_BASE_URL, window.location.origin);
+  const proto = base.protocol === 'https:' ? 'wss:' : 'ws:';
+  const token = localStorage.getItem(TOKEN_KEY) || '';
+  return `${proto}//${base.host}${base.pathname.replace(/\/+$/, '')}${path}?token=${encodeURIComponent(token)}`;
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {

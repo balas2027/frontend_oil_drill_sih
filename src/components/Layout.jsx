@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { alertsApi } from '../api/risk';
+import { alertLevel } from './risk/riskUtils';
 import {
   Compass,
   LayoutDashboard,
@@ -13,7 +15,57 @@ import {
   UserCheck,
   Database,
   Lightbulb,
+  Bell,
 } from 'lucide-react';
+
+const BELL_POLL_MS = 15000;
+
+/** Header bell (Section 9): active alerts, coloured by the most severe level. */
+function AlertsBell() {
+  const [summary, setSummary] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      alertsApi
+        .summary()
+        .then((res) => !cancelled && setSummary(res.data))
+        .catch(() => {});
+    load();
+    const t = setInterval(load, BELL_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [location.pathname]);
+
+  const active = summary?.active || 0;
+  const worst = ['critical', 'warning', 'watch', 'info'].find((l) => summary?.by_level?.[l]);
+  const live = summary?.simulations?.length > 0;
+  return (
+    <Link
+      to="/alerts"
+      className="relative flex items-center gap-1.5 bg-royal-700/60 hover:bg-royal-700 px-3 py-2 rounded-lg border border-royal-600"
+      aria-label={`${active} active alerts${worst ? `, most severe ${worst}` : ''}`}
+    >
+      <Bell className="w-4 h-4 text-gold-500" aria-hidden="true" />
+      {live && (
+        <span className="text-[10px] uppercase tracking-wider text-emerald-300 font-semibold">
+          Live
+        </span>
+      )}
+      {active > 0 && (
+        <span
+          className="min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+          style={{ background: alertLevel(worst).color }}
+        >
+          {active}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
@@ -54,6 +106,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-4 text-xs">
+            <AlertsBell />
             <div className="flex items-center gap-2 bg-royal-700/60 px-3 py-1.5 rounded-lg border border-royal-600">
               <UserCheck className="w-4 h-4 text-gold-500" />
               <div>

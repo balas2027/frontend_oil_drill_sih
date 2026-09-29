@@ -12,7 +12,7 @@ const MapPage = lazyPage(() => import('./pages/MapPage'));
 const DataExplorer = lazyPage(() => import('./pages/DataExplorer'));
 const Documents = lazyPage(() => import('./pages/Documents'));
 const DocumentDetail = lazyPage(() => import('./pages/DocumentDetail'));
-const PlannedModule = lazyPage(() => import('./pages/PlannedModule'));
+const RiskAlerts = lazyPage(() => import('./pages/RiskAlerts'));
 const Knowledge = lazyPage(() => import('./pages/Knowledge'));
 const Lessons = lazyPage(() => import('./pages/Lessons'));
 const Correlation = lazyPage(() => import('./pages/Correlation'));
@@ -90,7 +90,7 @@ export default function App() {
             path="alerts"
             element={
               <Page>
-                <PlannedModule module="alerts" />
+                <RiskAlerts />
               </Page>
             }
           />

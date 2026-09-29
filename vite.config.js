@@ -24,6 +24,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        ws: true, // /api/v1/ws/* when VITE_API_URL points at the dev server
       },
     },
   },
