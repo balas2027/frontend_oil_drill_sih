@@ -41,7 +41,10 @@ export default function LessonEditor({ eventIds, onClose, onSaved }) {
         outcome: form.outcome || null,
         recommendation: form.recommendation || null,
         event_ids: form.event_ids,
-        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        tags: form.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
         status: form.status,
       };
       const res = await lessonsApi.create(body);
@@ -54,16 +57,34 @@ export default function LessonEditor({ eventIds, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-royal-900/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Create lesson">
+    <div
+      className="fixed inset-0 z-50 bg-royal-900/40 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create lesson"
+    >
       <div className="bg-white rounded-xl shadow-xl border border-line w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-line flex items-center justify-between bg-royal-50">
-          <h3 className="text-sm font-bold text-royal-900">Create lesson from {eventIds.length} event(s)</h3>
-          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-royal-100" aria-label="Close">
+          <h3 className="text-sm font-bold text-royal-900">
+            Create lesson from {eventIds.length} event(s)
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded hover:bg-royal-100"
+            aria-label="Close"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
-        {!form && !error && <p className="p-4 text-xs text-ink-600 animate-pulse">Preparing draft…</p>}
-        {error && <p className="m-4 p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>}
+        {!form && !error && (
+          <p className="p-4 text-xs text-ink-600 animate-pulse">Preparing draft…</p>
+        )}
+        {error && (
+          <p className="m-4 p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">
+            {error}
+          </p>
+        )}
         {form && (
           <div className="p-4 grid grid-cols-2 gap-3 text-xs">
             <label className="col-span-2">
@@ -76,7 +97,11 @@ export default function LessonEditor({ eventIds, onClose, onSaved }) {
             </label>
             <label>
               <span className="font-semibold text-ink-600">Formation</span>
-              <input className={inputCls} value={form.formation || ''} onChange={set('formation')} />
+              <input
+                className={inputCls}
+                value={form.formation || ''}
+                onChange={set('formation')}
+              />
             </label>
             {[
               ['what_happened', 'What happened'],
@@ -95,10 +120,15 @@ export default function LessonEditor({ eventIds, onClose, onSaved }) {
               <input className={inputCls} value={form.tags} onChange={set('tags')} />
             </label>
             <p className="col-span-2 text-[11px] text-ink-600">
-              Linked wells: {(form.wells || []).join(', ')} · the lesson links back to each event and its source report.
+              Linked wells: {(form.wells || []).join(', ')} · the lesson links back to each event
+              and its source report.
             </p>
             <div className="col-span-2 flex items-center justify-end gap-2">
-              <select className="text-xs border border-line rounded-md px-2 py-1.5" value={form.status} onChange={set('status')}>
+              <select
+                className="text-xs border border-line rounded-md px-2 py-1.5"
+                value={form.status}
+                onChange={set('status')}
+              >
                 <option value="published">Publish</option>
                 <option value="draft">Save as draft</option>
               </select>

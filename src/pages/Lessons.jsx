@@ -26,7 +26,9 @@ function LessonCard({ lesson, curator, admin, onChanged }) {
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-bold text-royal-900 leading-snug">{lesson.title}</h3>
         {lesson.status !== 'published' && (
-          <span className="px-1.5 py-0.5 rounded border border-line bg-slate-50 text-[10px] capitalize">{lesson.status}</span>
+          <span className="px-1.5 py-0.5 rounded border border-line bg-slate-50 text-[10px] capitalize">
+            {lesson.status}
+          </span>
         )}
       </div>
       <dl className="space-y-1">
@@ -39,13 +41,19 @@ function LessonCard({ lesson, curator, admin, onChanged }) {
           .filter(([, v]) => v)
           .map(([k, v]) => (
             <div key={k}>
-              <dt className="text-[10px] uppercase tracking-wider text-ink-600 font-semibold">{k}</dt>
-              <dd className={k === 'What worked' ? 'font-semibold text-royal-900' : 'text-ink-900'}>{v}</dd>
+              <dt className="text-[10px] uppercase tracking-wider text-ink-600 font-semibold">
+                {k}
+              </dt>
+              <dd className={k === 'What worked' ? 'font-semibold text-royal-900' : 'text-ink-900'}>
+                {v}
+              </dd>
             </div>
           ))}
       </dl>
       {lesson.recommendation && (
-        <p className="border-l-4 border-gold-500 bg-gold-100/60 px-2.5 py-1.5 rounded-r text-ink-900">{lesson.recommendation}</p>
+        <p className="border-l-4 border-gold-500 bg-gold-100/60 px-2.5 py-1.5 rounded-r text-ink-900">
+          {lesson.recommendation}
+        </p>
       )}
       <details>
         <summary className="cursor-pointer text-royal-700 font-semibold">
@@ -71,7 +79,10 @@ function LessonCard({ lesson, curator, admin, onChanged }) {
       </details>
       <div className="flex flex-wrap items-center gap-1 mt-auto pt-2 border-t border-line">
         {(lesson.tags || []).map((t) => (
-          <span key={t} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-royal-50 text-royal-700 border border-royal-100 text-[10px]">
+          <span
+            key={t}
+            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-royal-50 text-royal-700 border border-royal-100 text-[10px]"
+          >
             <Tag className="w-2.5 h-2.5" aria-hidden="true" /> {t}
           </span>
         ))}
@@ -92,7 +103,10 @@ function LessonCard({ lesson, curator, admin, onChanged }) {
           <button
             type="button"
             disabled={busy}
-            onClick={() => window.confirm('Delete this lesson permanently?') && act(() => lessonsApi.remove(lesson._id))}
+            onClick={() =>
+              window.confirm('Delete this lesson permanently?') &&
+              act(() => lessonsApi.remove(lesson._id))
+            }
             className="p-1 rounded hover:bg-red-50 text-red-700"
             aria-label="Delete lesson"
             title="Delete"
@@ -107,7 +121,12 @@ function LessonCard({ lesson, curator, admin, onChanged }) {
 
 export default function Lessons() {
   const user = useAuthStore((s) => s.user);
-  const [filters, setFilters] = useState({ q: '', risk_type: '', formation: '', status: 'published' });
+  const [filters, setFilters] = useState({
+    q: '',
+    risk_type: '',
+    formation: '',
+    status: 'published',
+  });
   const [data, setData] = useState({ lessons: [], total: 0 });
   const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(true);
@@ -132,7 +151,10 @@ export default function Lessons() {
   }, [load]);
 
   useEffect(() => {
-    wellsApi.getFilterOptions().then((r) => setOptions(r.data)).catch(() => {});
+    wellsApi
+      .getFilterOptions()
+      .then((r) => setOptions(r.data))
+      .catch(() => {});
   }, []);
 
   const groups = useMemo(() => {
@@ -150,19 +172,32 @@ export default function Lessons() {
           <span className="text-xs uppercase font-bold tracking-wider text-royal-700 flex items-center gap-1">
             <Lightbulb className="w-3.5 h-3.5" aria-hidden="true" /> Lessons library
           </span>
-          <h2 className="text-xl font-bold text-royal-900 font-serif">What offset wells taught us</h2>
+          <h2 className="text-xl font-bold text-royal-900 font-serif">
+            What offset wells taught us
+          </h2>
           <p className="text-xs text-ink-600 mt-1">
-            Curated lessons by risk type and formation, each linked to its events and source reports. Reviewers create lessons
-            from selected events (Data Explorer) or from an Ask NWIS answer.
+            Curated lessons by risk type and formation, each linked to its events and source
+            reports. Reviewers create lessons from selected events (Data Explorer) or from an Ask
+            NWIS answer.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="relative">
             <span className="sr-only">Search lessons</span>
             <Search className="w-3.5 h-3.5 text-ink-600 absolute left-2 top-2" aria-hidden="true" />
-            <input value={filters.q} onChange={set('q')} placeholder="Search lessons" className={`${inputCls} pl-7 w-56`} />
+            <input
+              value={filters.q}
+              onChange={set('q')}
+              placeholder="Search lessons"
+              className={`${inputCls} pl-7 w-56`}
+            />
           </label>
-          <select aria-label="Risk type" className={`${inputCls} capitalize`} value={filters.risk_type} onChange={set('risk_type')}>
+          <select
+            aria-label="Risk type"
+            className={`${inputCls} capitalize`}
+            value={filters.risk_type}
+            onChange={set('risk_type')}
+          >
             <option value="">All risk types</option>
             {options.event_types?.map((t) => (
               <option key={t} value={t}>
@@ -170,37 +205,63 @@ export default function Lessons() {
               </option>
             ))}
           </select>
-          <select aria-label="Formation" className={inputCls} value={filters.formation} onChange={set('formation')}>
+          <select
+            aria-label="Formation"
+            className={inputCls}
+            value={filters.formation}
+            onChange={set('formation')}
+          >
             <option value="">All formations</option>
             {options.formations?.map((f) => (
               <option key={f}>{f}</option>
             ))}
           </select>
-          <select aria-label="Status" className={inputCls} value={filters.status} onChange={set('status')}>
+          <select
+            aria-label="Status"
+            className={inputCls}
+            value={filters.status}
+            onChange={set('status')}
+          >
             <option value="published">Published</option>
             <option value="draft">Drafts</option>
             <option value="archived">Archived</option>
             <option value="all">All</option>
           </select>
-          <span className="text-[11px] text-ink-600 self-center tabular-nums">{data.total} lesson(s)</span>
+          <span className="text-[11px] text-ink-600 self-center tabular-nums">
+            {data.total} lesson(s)
+          </span>
         </div>
       </div>
 
-      {error && <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>}
+      {error && (
+        <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>
+      )}
       {loading && <p className="text-xs text-royal-700 animate-pulse">Loading lessons…</p>}
       {!loading && data.lessons.length === 0 && (
-        <p className="p-8 text-center text-xs text-ink-600 bg-white rounded-xl border border-line">No lessons match these filters.</p>
+        <p className="p-8 text-center text-xs text-ink-600 bg-white rounded-xl border border-line">
+          No lessons match these filters.
+        </p>
       )}
 
       {groups.map(([risk, lessons]) => (
         <section key={risk} aria-label={formatEventType(risk)}>
           <h3 className="text-xs uppercase font-bold tracking-wider text-royal-900 mb-2 flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: EVENT_TYPE_COLORS[risk] }} aria-hidden="true" />
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ background: EVENT_TYPE_COLORS[risk] }}
+              aria-hidden="true"
+            />
             {formatEventType(risk)} ({lessons.length})
           </h3>
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
             {lessons.map((l) => (
-              <LessonCard key={l._id} lesson={l} curator={canReview(user)} admin={isAdmin(user)} onChanged={load} />
+              <LessonCard
+                key={l._id}
+                lesson={l}
+                curator={canReview(user)}
+                admin={isAdmin(user)}
+                onChanged={load}
+              />
             ))}
           </div>
         </section>

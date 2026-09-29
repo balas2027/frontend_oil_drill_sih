@@ -16,7 +16,8 @@ const inputCls =
 
 /** Browser speech-to-text (Web Speech API - free, runs in Chrome/Edge). */
 function useSpeech(onText) {
-  const Rec = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  const Rec =
+    typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
   const recRef = useRef(null);
   const [listening, setListening] = useState(false);
   const start = () => {
@@ -71,7 +72,9 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
       .catch(() => setSuggestions([]));
   }, [wellId]);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), [thread.length]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [thread.length]);
 
   const ask = async (q) => {
     const text = (q ?? question).trim();
@@ -80,7 +83,11 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
     setError(null);
     setQuestion('');
     try {
-      const res = await knowledgeApi.ask({ question: text, well_id: wellId || undefined, radius_km: wellId ? radius : undefined });
+      const res = await knowledgeApi.ask({
+        question: text,
+        well_id: wellId || undefined,
+        radius_km: wellId ? radius : undefined,
+      });
       setThread((t) => [...t, res.data]);
       const first = res.data.citations.find((c) => c.doc_id) || res.data.citations[0];
       if (first) onCite({ ...first, _answer: res.data.answer_id });
@@ -107,7 +114,11 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         {wellId && (
           <>
             <span className="text-ink-600">offsets within</span>
-            <select value={radius} onChange={(e) => setRadius(Number(e.target.value))} className={inputCls}>
+            <select
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              className={inputCls}
+            >
               {[5, 10, 20, 50].map((r) => (
                 <option key={r} value={r}>
                   {r} km
@@ -116,14 +127,17 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
             </select>
           </>
         )}
-        <span className="text-[10px] text-ink-600">Used when a question says “offset/nearby wells”.</span>
+        <span className="text-[10px] text-ink-600">
+          Used when a question says “offset/nearby wells”.
+        </span>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto max-h-[58vh] pr-1" aria-live="polite">
         {thread.length === 0 && (
           <div className="text-center py-8 text-xs text-ink-600">
             <Sparkles className="w-8 h-8 mx-auto text-gold-500 mb-2" aria-hidden="true" />
-            Ask about offset-well history. Answers use only recorded events and reports, and every statement is cited.
+            Ask about offset-well history. Answers use only recorded events and reports, and every
+            statement is cited.
           </div>
         )}
         {thread.map((r) => (
@@ -140,7 +154,11 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
             />
           </div>
         ))}
-        {busy && <p className="text-xs text-royal-700 animate-pulse">Searching records and checking citations…</p>}
+        {busy && (
+          <p className="text-xs text-royal-700 animate-pulse">
+            Searching records and checking citations…
+          </p>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -160,7 +178,9 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         </div>
       )}
 
-      {error && <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>}
+      {error && (
+        <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -210,7 +230,15 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
 function SearchPanel({ options, wellIds, onCite, activeCitation }) {
   const activeWell = useMapStore((s) => s.activeWell);
   const [query, setQuery] = useState('');
-  const [f, setF] = useState({ formation: '', event_type: '', depth_from: '', depth_to: '', kind: '', well_id: '', radius_km: '' });
+  const [f, setF] = useState({
+    formation: '',
+    event_type: '',
+    depth_from: '',
+    depth_to: '',
+    kind: '',
+    well_id: '',
+    radius_km: '',
+  });
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -257,18 +285,32 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
               className="w-full text-sm border border-line rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-royal-600 focus:outline-none"
             />
           </label>
-          <button type="submit" disabled={busy} className="bg-royal-700 hover:bg-royal-900 text-white text-sm px-4 rounded-lg disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={busy}
+            className="bg-royal-700 hover:bg-royal-900 text-white text-sm px-4 rounded-lg disabled:opacity-50"
+          >
             Search
           </button>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <select aria-label="Formation" className={inputCls} value={f.formation} onChange={set('formation')}>
+          <select
+            aria-label="Formation"
+            className={inputCls}
+            value={f.formation}
+            onChange={set('formation')}
+          >
             <option value="">Any formation</option>
             {options.formations?.map((x) => (
               <option key={x}>{x}</option>
             ))}
           </select>
-          <select aria-label="Event type" className={`${inputCls} capitalize`} value={f.event_type} onChange={set('event_type')}>
+          <select
+            aria-label="Event type"
+            className={`${inputCls} capitalize`}
+            value={f.event_type}
+            onChange={set('event_type')}
+          >
             <option value="">Any event type</option>
             {options.event_types?.map((x) => (
               <option key={x} value={x}>
@@ -276,14 +318,38 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
               </option>
             ))}
           </select>
-          <input aria-label="Depth from" type="number" placeholder="From m" className={`${inputCls} w-24`} value={f.depth_from} onChange={set('depth_from')} />
-          <input aria-label="Depth to" type="number" placeholder="To m" className={`${inputCls} w-24`} value={f.depth_to} onChange={set('depth_to')} />
-          <select aria-label="Source kind" className={inputCls} value={f.kind} onChange={set('kind')}>
+          <input
+            aria-label="Depth from"
+            type="number"
+            placeholder="From m"
+            className={`${inputCls} w-24`}
+            value={f.depth_from}
+            onChange={set('depth_from')}
+          />
+          <input
+            aria-label="Depth to"
+            type="number"
+            placeholder="To m"
+            className={`${inputCls} w-24`}
+            value={f.depth_to}
+            onChange={set('depth_to')}
+          />
+          <select
+            aria-label="Source kind"
+            className={inputCls}
+            value={f.kind}
+            onChange={set('kind')}
+          >
             <option value="">Reports + events</option>
             <option value="document">Reports only</option>
             <option value="event">Event records only</option>
           </select>
-          <select aria-label="Well scope" className={inputCls} value={f.well_id} onChange={set('well_id')}>
+          <select
+            aria-label="Well scope"
+            className={inputCls}
+            value={f.well_id}
+            onChange={set('well_id')}
+          >
             <option value="">All wells</option>
             {activeWell && <option value={activeWell.well_id}>Active: {activeWell.well_id}</option>}
             {wellIds.map((w) => (
@@ -293,7 +359,12 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
             ))}
           </select>
           {f.well_id && (
-            <select aria-label="Radius" className={inputCls} value={f.radius_km} onChange={set('radius_km')}>
+            <select
+              aria-label="Radius"
+              className={inputCls}
+              value={f.radius_km}
+              onChange={set('radius_km')}
+            >
               <option value="">This well only</option>
               {[5, 10, 20].map((r) => (
                 <option key={r} value={r}>
@@ -304,11 +375,13 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
           )}
         </div>
       </form>
-      {error && <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>}
+      {error && (
+        <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>
+      )}
       {result && (
         <p className="text-[11px] text-ink-600 tabular-nums">
-          {result.results.length} result(s) from {result.candidates} indexed chunk(s) after filters · {result.took_ms} ms ·{' '}
-          {result.embedding_model} + keyword index
+          {result.results.length} result(s) from {result.candidates} indexed chunk(s) after filters
+          · {result.took_ms} ms · {result.embedding_model} + keyword index
         </p>
       )}
       <ul className="space-y-2" aria-busy={busy}>
@@ -326,8 +399,13 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
                   <span className="font-semibold text-royal-900 flex items-center gap-1.5">
                     {h.kind === 'event' ? (
                       <>
-                        <span className="w-2 h-2 rounded-full" style={{ background: EVENT_TYPE_COLORS[h.event_type] }} aria-hidden="true" />
-                        <span className="capitalize">{formatEventType(h.event_type)}</span> · {h.well_id}
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ background: EVENT_TYPE_COLORS[h.event_type] }}
+                          aria-hidden="true"
+                        />
+                        <span className="capitalize">{formatEventType(h.event_type)}</span> ·{' '}
+                        {h.well_id}
                       </>
                     ) : (
                       <>
@@ -358,12 +436,18 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
 function BenchmarkBadge() {
   const [m, setM] = useState(null);
   useEffect(() => {
-    knowledgeApi.metrics().then((r) => setM(r.data)).catch(() => {});
+    knowledgeApi
+      .metrics()
+      .then((r) => setM(r.data))
+      .catch(() => {});
   }, []);
   const b = m?.latest_benchmark;
   if (!b) return null;
   return (
-    <span className="text-[11px] text-ink-600 flex items-center gap-1 tabular-nums" title="scripts/evaluate_advisor.py">
+    <span
+      className="text-[11px] text-ink-600 flex items-center gap-1 tabular-nums"
+      title="scripts/evaluate_advisor.py"
+    >
       <Gauge className="w-3.5 h-3.5 text-royal-700" aria-hidden="true" />
       Benchmark: {b.passed}/{b.questions} questions with correct citations · citation precision{' '}
       {b.mean_event_citation_precision}
@@ -398,11 +482,16 @@ export default function Knowledge() {
           </span>
           <h2 className="text-xl font-bold text-royal-900 font-serif">Ask NWIS</h2>
           <p className="text-xs text-ink-600 mt-1">
-            Questions are answered only from recorded events and uploaded reports - click a citation to see the page.
+            Questions are answered only from recorded events and uploaded reports - click a citation
+            to see the page.
           </p>
           <BenchmarkBadge />
         </div>
-        <div role="tablist" aria-label="Knowledge view" className="flex bg-royal-50 border border-line rounded-lg p-1 gap-1">
+        <div
+          role="tablist"
+          aria-label="Knowledge view"
+          className="flex bg-royal-50 border border-line rounded-lg p-1 gap-1"
+        >
           {[
             ['ask', 'Ask NWIS', MessageSquare],
             ['search', 'Search', Search],
@@ -413,7 +502,9 @@ export default function Knowledge() {
               aria-selected={tab === k}
               onClick={() => setParams({ tab: k })}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium ${
-                tab === k ? 'bg-royal-700 text-white' : 'text-ink-600 hover:bg-royal-100 hover:text-royal-900'
+                tab === k
+                  ? 'bg-royal-700 text-white'
+                  : 'text-ink-600 hover:bg-royal-100 hover:text-royal-900'
               }`}
             >
               <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {label}
@@ -429,11 +520,24 @@ export default function Knowledge() {
       )}
 
       <div className="grid lg:grid-cols-5 gap-4">
-        <section className="lg:col-span-3 bg-white rounded-xl border border-line shadow-sm p-4" role="tabpanel">
+        <section
+          className="lg:col-span-3 bg-white rounded-xl border border-line shadow-sm p-4"
+          role="tabpanel"
+        >
           {tab === 'ask' ? (
-            <AskPanel wellIds={wellIds} onCite={setCitation} activeCitation={citation} onSaveLesson={setLessonEvents} />
+            <AskPanel
+              wellIds={wellIds}
+              onCite={setCitation}
+              activeCitation={citation}
+              onSaveLesson={setLessonEvents}
+            />
           ) : (
-            <SearchPanel options={options} wellIds={wellIds} onCite={setCitation} activeCitation={citation} />
+            <SearchPanel
+              options={options}
+              wellIds={wellIds}
+              onCite={setCitation}
+              activeCitation={citation}
+            />
           )}
         </section>
         <div className="lg:col-span-2 lg:sticky lg:top-4 self-start w-full">
@@ -441,7 +545,8 @@ export default function Knowledge() {
             <CitationViewer citation={citation} onClose={() => setCitation(null)} />
           ) : (
             <div className="bg-white rounded-xl border border-dashed border-line p-6 text-center text-xs text-ink-600 min-h-[300px] flex items-center justify-center">
-              Click a citation or a search result to open the source page with the evidence highlighted.
+              Click a citation or a search result to open the source page with the evidence
+              highlighted.
             </div>
           )}
         </div>

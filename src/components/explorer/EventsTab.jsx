@@ -352,7 +352,8 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
             onClick={() => setLessonOpen(true)}
             className="flex items-center gap-1 text-[11px] font-medium border border-royal-700 text-royal-700 hover:bg-royal-100 px-2 py-1 rounded-md disabled:opacity-40"
           >
-            <BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Create lesson ({selected.length})
+            <BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Create lesson (
+            {selected.length})
           </button>
         )}
       </div>

@@ -26,9 +26,14 @@ export default function AnswerCard({ result, activeCitation, onCite, onSaveLesso
   const eventIds = result.citations.filter((c) => c.kind === 'event').map((c) => c.event_id);
 
   return (
-    <article className="bg-white border border-line rounded-xl shadow-sm p-4 space-y-3" aria-label="Answer">
+    <article
+      className="bg-white border border-line rounded-xl shadow-sm p-4 space-y-3"
+      aria-label="Answer"
+    >
       <div className="flex flex-wrap items-center gap-2 text-[10px]">
-        <span className={`px-1.5 py-0.5 rounded border font-semibold capitalize ${CONF[conf.level] || CONF.none}`}>
+        <span
+          className={`px-1.5 py-0.5 rounded border font-semibold capitalize ${CONF[conf.level] || CONF.none}`}
+        >
           {conf.level || 'none'} confidence
         </span>
         <span className="text-ink-600 tabular-nums">
@@ -66,7 +71,9 @@ export default function AnswerCard({ result, activeCitation, onCite, onSaveLesso
 
       {result.citations.length > 0 && (
         <details className="text-xs">
-          <summary className="cursor-pointer text-royal-700 font-semibold">Sources ({result.citations.length})</summary>
+          <summary className="cursor-pointer text-royal-700 font-semibold">
+            Sources ({result.citations.length})
+          </summary>
           <ol className="mt-1.5 space-y-1">
             {result.citations.map((c) => (
               <li key={c.n}>
@@ -77,9 +84,15 @@ export default function AnswerCard({ result, activeCitation, onCite, onSaveLesso
                 >
                   <span className="text-royal-700 font-bold tabular-nums">[{c.n}]</span>
                   {c.doc_id ? (
-                    <FileText className="w-3.5 h-3.5 mt-0.5 text-royal-600 shrink-0" aria-hidden="true" />
+                    <FileText
+                      className="w-3.5 h-3.5 mt-0.5 text-royal-600 shrink-0"
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <Database className="w-3.5 h-3.5 mt-0.5 text-ink-600 shrink-0" aria-hidden="true" />
+                    <Database
+                      className="w-3.5 h-3.5 mt-0.5 text-ink-600 shrink-0"
+                      aria-hidden="true"
+                    />
                   )}
                   <span className="text-ink-900">
                     {c.kind === 'event'

@@ -9,7 +9,9 @@ const PdfViewer = lazy(() => import('../documents/PdfViewer'));
  * or the event record when no report is linked (Section 10.7). */
 export default function CitationViewer({ citation, onClose }) {
   const [page, setPage] = useState(citation?.page || 1);
-  useEffect(() => setPage(citation?.page || 1), [citation]);
+  useEffect(() => {
+    setPage(citation?.page || 1);
+  }, [citation]);
   if (!citation) return null;
   const c = citation;
   const hasDoc = Boolean(c.doc_id);
@@ -25,7 +27,11 @@ export default function CitationViewer({ citation, onClose }) {
             <span className="px-1.5 rounded bg-royal-700 text-white text-[10px]">[{c.n}]</span>
             {c.kind === 'event' ? (
               <span className="flex items-center gap-1 capitalize">
-                <span className="w-2 h-2 rounded-full" style={{ background: EVENT_TYPE_COLORS[c.type] }} aria-hidden="true" />
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: EVENT_TYPE_COLORS[c.type] }}
+                  aria-hidden="true"
+                />
                 {formatEventType(c.type)} · {c.well_id}
               </span>
             ) : (
@@ -38,7 +44,12 @@ export default function CitationViewer({ citation, onClose }) {
             {hasDoc && ` ${c.kind === 'event' ? '· ' : ''}page ${c.page}`}
           </p>
         </div>
-        <button type="button" onClick={onClose} className="p-1 rounded hover:bg-royal-100" aria-label="Close citation">
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1 rounded hover:bg-royal-100"
+          aria-label="Close citation"
+        >
           <X className="w-4 h-4 text-ink-600" />
         </button>
       </div>
@@ -52,7 +63,8 @@ export default function CitationViewer({ citation, onClose }) {
         <p className="mx-3 mt-1.5 text-xs">
           {c.mitigation && (
             <>
-              <span className="text-ink-600">Mitigation:</span> <b className="text-royal-900">{c.mitigation}</b>
+              <span className="text-ink-600">Mitigation:</span>{' '}
+              <b className="text-royal-900">{c.mitigation}</b>
             </>
           )}
           {c.outcome && <span className="text-ink-600"> · {c.outcome}</span>}
@@ -82,8 +94,8 @@ export default function CitationViewer({ citation, onClose }) {
         <div className="m-3 p-3 rounded-lg border border-line bg-slate-50 text-xs text-ink-600 flex gap-2">
           <Database className="w-4 h-4 shrink-0 text-royal-700" aria-hidden="true" />
           <span>
-            Cited from the event record in the knowledge base. No source report is linked to this event yet - upload the
-            DDR/WCR on the{' '}
+            Cited from the event record in the knowledge base. No source report is linked to this
+            event yet - upload the DDR/WCR on the{' '}
             <Link to="/documents" className="text-royal-600 hover:underline">
               Documents
             </Link>{' '}

@@ -6,7 +6,8 @@ export const knowledgeApi = {
   ask: (body) => apiClient.post('/advisor/ask', clean(body)),
   feedback: (answerId, useful, comment) =>
     apiClient.post(`/advisor/${answerId}/feedback`, { useful, comment }),
-  suggestions: (wellId) => apiClient.get('/advisor/suggestions', { params: clean({ well_id: wellId }) }),
+  suggestions: (wellId) =>
+    apiClient.get('/advisor/suggestions', { params: clean({ well_id: wellId }) }),
   history: () => apiClient.get('/advisor/history'),
   metrics: () => apiClient.get('/advisor/metrics'),
 };
@@ -14,7 +15,8 @@ export const knowledgeApi = {
 export const lessonsApi = {
   list: (params = {}) => apiClient.get('/lessons', { params: clean(params) }),
   get: (id) => apiClient.get(`/lessons/${id}`),
-  draft: (eventIds) => apiClient.get('/lessons/draft', { params: { event_ids: eventIds.join(',') } }),
+  draft: (eventIds) =>
+    apiClient.get('/lessons/draft', { params: { event_ids: eventIds.join(',') } }),
   create: (body) => apiClient.post('/lessons', body),
   update: (id, body) => apiClient.patch(`/lessons/${id}`, body),
   remove: (id) => apiClient.delete(`/lessons/${id}`),
