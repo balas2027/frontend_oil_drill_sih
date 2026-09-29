@@ -13,6 +13,8 @@ const DataExplorer = lazyPage(() => import('./pages/DataExplorer'));
 const Documents = lazyPage(() => import('./pages/Documents'));
 const DocumentDetail = lazyPage(() => import('./pages/DocumentDetail'));
 const PlannedModule = lazyPage(() => import('./pages/PlannedModule'));
+const Knowledge = lazyPage(() => import('./pages/Knowledge'));
+const Lessons = lazyPage(() => import('./pages/Lessons'));
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore();
@@ -103,7 +105,15 @@ export default function App() {
             path="knowledge"
             element={
               <Page>
-                <PlannedModule module="knowledge" />
+                <Knowledge />
+              </Page>
+            }
+          />
+          <Route
+            path="lessons"
+            element={
+              <Page>
+                <Lessons />
               </Page>
             }
           />

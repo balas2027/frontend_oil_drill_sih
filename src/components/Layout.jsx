@@ -12,6 +12,7 @@ import {
   LogOut,
   UserCheck,
   Database,
+  Lightbulb,
 } from 'lucide-react';
 
 export default function Layout() {
@@ -30,7 +31,8 @@ export default function Layout() {
     { label: 'Data Explorer', path: '/data', icon: Database },
     { label: 'Correlation', path: '/correlation', icon: TrendingUp },
     { label: 'Risk & Alerts', path: '/alerts', icon: AlertTriangle },
-    { label: 'Knowledge Base', path: '/knowledge', icon: BookOpen },
+    { label: 'Ask NWIS & Search', path: '/knowledge', icon: BookOpen },
+    { label: 'Lessons', path: '/lessons', icon: Lightbulb },
     { label: 'Documents', path: '/documents', icon: FileText },
   ];
 

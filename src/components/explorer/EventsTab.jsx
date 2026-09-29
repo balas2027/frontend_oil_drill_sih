@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, ShieldCheck, FileSearch } from 'lucide-react';
+import { CheckCircle2, XCircle, ShieldCheck, FileSearch, BookmarkPlus } from 'lucide-react';
 import { eventsApi } from '../../api/wells';
 import { apiErrorMessage } from '../../api/client';
 import { useAuthStore, canReview } from '../../store/authStore';
 import DataTable, { Pagination } from '../common/DataTable';
 import { EVENT_TYPE_COLORS, formatEventType } from '../map/eventStyles';
+import LessonEditor from '../knowledge/LessonEditor';
 
 const LIMIT = 20;
 const inputCls =
@@ -146,6 +147,11 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [lessonOpen, setLessonOpen] = useState(false);
+  const [savedLesson, setSavedLesson] = useState(null);
+  const toggleSelected = (id) =>
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id].slice(0, 50)));
 
   useEffect(() => {
     let cancelled = false;
@@ -175,7 +181,22 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
   const onReviewed = (updated) =>
     setData((d) => ({ ...d, events: d.events.map((e) => (e._id === updated._id ? updated : e)) }));
 
+  const selectColumn = {
+    key: 'select',
+    label: '',
+    render: (e) => (
+      <input
+        type="checkbox"
+        checked={selected.includes(e._id)}
+        onClick={(ev) => ev.stopPropagation()}
+        onChange={() => toggleSelected(e._id)}
+        aria-label={`Select event ${e.well_id} ${e.depth_from_md} m`}
+        className="accent-royal-700"
+      />
+    ),
+  };
   const columns = [
+    ...(reviewer ? [selectColumn] : []),
     { key: 'well_id', label: 'Well', sortKey: 'well_id', className: 'font-mono text-royal-900' },
     {
       key: 'type',
@@ -324,7 +345,37 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
             <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" /> You can verify events
           </span>
         )}
+        {reviewer && (
+          <button
+            type="button"
+            disabled={!selected.length}
+            onClick={() => setLessonOpen(true)}
+            className="flex items-center gap-1 text-[11px] font-medium border border-royal-700 text-royal-700 hover:bg-royal-100 px-2 py-1 rounded-md disabled:opacity-40"
+          >
+            <BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Create lesson ({selected.length})
+          </button>
+        )}
       </div>
+      {savedLesson && (
+        <p className="m-3 p-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 rounded">
+          Lesson “{savedLesson.title}” saved -{' '}
+          <Link to="/lessons" className="underline">
+            open the Lessons library
+          </Link>
+          .
+        </p>
+      )}
+      {lessonOpen && (
+        <LessonEditor
+          eventIds={selected}
+          onClose={() => setLessonOpen(false)}
+          onSaved={(l) => {
+            setLessonOpen(false);
+            setSelected([]);
+            setSavedLesson(l);
+          }}
+        />
+      )}
       {error && (
         <p className="m-3 p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">
           {error}
