@@ -15,6 +15,7 @@ const DocumentDetail = lazyPage(() => import('./pages/DocumentDetail'));
 const PlannedModule = lazyPage(() => import('./pages/PlannedModule'));
 const Knowledge = lazyPage(() => import('./pages/Knowledge'));
 const Lessons = lazyPage(() => import('./pages/Lessons'));
+const Correlation = lazyPage(() => import('./pages/Correlation'));
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore();
@@ -97,7 +98,7 @@ export default function App() {
             path="correlation"
             element={
               <Page>
-                <PlannedModule module="correlation" />
+                <Correlation />
               </Page>
             }
           />

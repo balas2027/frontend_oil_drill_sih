@@ -1,13 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  AlertTriangle,
-  BookOpen,
-  TrendingUp,
-  CheckCircle2,
-  Circle,
-  ArrowRight,
-} from 'lucide-react';
-import { useMapStore } from '../store/mapStore';
+import { AlertTriangle, BookOpen, CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 
 /** Modules scheduled for later phases (Development Guide Section 12). */
 const MODULES = {
@@ -33,28 +25,6 @@ const MODULES = {
       { to: '/map', label: 'Offset wells and similarity ranking' },
     ],
   },
-  correlation: {
-    icon: TrendingUp,
-    title: 'Depth Correlation',
-    phase: 'Phase 5',
-    summary:
-      'Align 3-5 wells by formation tops, compare events, mud weight and ROP per depth bin, and list hotspots.',
-    planned: [
-      'Piecewise formation alignment (Formation / TVD / MD toggle)',
-      'Linked depth-track chart: formation column, event icons, mud weight, ROP',
-      'Hotspot panel: depth intervals where several offset wells had events',
-    ],
-    ready: [
-      { to: '/map', label: 'Queue wells with "Add to correlation" in the map drawer' },
-      {
-        to: '/map',
-        label:
-          'Subsurface 3D view of well paths, formation surfaces and events (Map > Subsurface 3D)',
-      },
-      { to: '/data?tab=wells', label: 'Formation tops per well' },
-    ],
-    showQueue: true,
-  },
   knowledge: {
     icon: BookOpen,
     title: 'Knowledge Base & Ask NWIS',
@@ -79,7 +49,6 @@ const MODULES = {
 
 export default function PlannedModule({ module }) {
   const cfg = MODULES[module];
-  const queue = useMapStore((s) => s.correlationWellIds);
   const Icon = cfg.icon;
 
   return (
@@ -127,16 +96,6 @@ export default function PlannedModule({ module }) {
               </li>
             ))}
           </ul>
-          {cfg.showQueue && (
-            <p className="mt-3 text-xs text-ink-600">
-              Wells queued for correlation:{' '}
-              {queue.length ? (
-                <b className="font-mono text-royal-900">{queue.join(', ')}</b>
-              ) : (
-                'none yet'
-              )}
-            </p>
-          )}
         </section>
       </div>
     </div>

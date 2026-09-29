@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import * as turf from '@turf/turf';
 import { Radar, Crosshair, GitCompareArrows } from 'lucide-react';
 import { useMapStore, MAX_CORRELATION_WELLS } from '../store/mapStore';
@@ -289,6 +290,12 @@ export default function MapPage() {
             <p className="mt-2 text-[10px] text-ink-600 flex items-center gap-1">
               <GitCompareArrows className="w-3 h-3 text-royal-700" aria-hidden="true" />
               {correlationWellIds.length}/{MAX_CORRELATION_WELLS} wells queued for correlation
+              <Link
+                to="/correlation"
+                className="ml-auto text-royal-600 font-semibold hover:underline"
+              >
+                Open →
+              </Link>
             </p>
           )}
         </div>

@@ -12,8 +12,11 @@ import {
 import { Delaunay } from 'd3-delaunay';
 import { Box, Eye, Layers as LayersIcon, X, Crosshair } from 'lucide-react';
 import { wellsApi } from '../../api/wells';
+import { correlationApi } from '../../api/correlation';
+import { pathBetween } from '../correlation/correlationUtils';
 import { apiErrorMessage } from '../../api/client';
 import { EVENT_TYPE_COLORS, formatEventType } from './eventStyles';
+import { FORMATION_COLORS } from './formationStyles';
 
 /*
  * Subsurface 3D view (Development Guide Section 8B-D) - deck.gl OrbitView, free
@@ -22,16 +25,6 @@ import { EVENT_TYPE_COLORS, formatEventType } from './eventStyles';
  * World Imagery export (free, attribution required).
  */
 
-const FORMATION_COLORS = {
-  Alluvium: [214, 196, 150],
-  Dhekiajuli: [201, 162, 39],
-  Tipam: [232, 135, 30],
-  Girujan: [150, 111, 51],
-  Namsang: [59, 111, 216],
-  Barail: [30, 142, 90],
-  Kopili: [124, 58, 237],
-  Langpar: [100, 116, 139],
-};
 const hex = (h) => [
   parseInt(h.slice(1, 3), 16),
   parseInt(h.slice(3, 5), 16),
@@ -40,6 +33,9 @@ const hex = (h) => [
 const ACTIVE = [201, 162, 39];
 const OFFSET = [29, 79, 184];
 const SELECTED = [198, 45, 59];
+const HOTSPOT = [232, 135, 30];
+const MAX_CORRELATED = 8; // backend correlation limit
+const MAX_HOTSPOT_LABELS = 3;
 
 const ORBIT_VIEW = new OrbitView({ id: 'subsurface', orbitAxis: 'Z', fovy: 45 });
 const VIEW_TRANSITION = new LinearInterpolator(['target', 'zoom', 'rotationX', 'rotationOrbit']);
@@ -114,7 +110,14 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ex, setEx] = useState(1.5);
-  const [show, setShow] = useState({ formations: true, events: true, ground: true, labels: true });
+  const [show, setShow] = useState({
+    formations: true,
+    events: true,
+    hotspots: true,
+    ground: true,
+    labels: true,
+  });
+  const [hotspots, setHotspots] = useState([]);
   const [groundOpacity, setGroundOpacity] = useState(0.5);
   const [viewState, setViewState] = useState(null);
   const [picked, setPicked] = useState(null);
@@ -155,6 +158,21 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
       cancelled = true;
     };
     // Re-fetch only when the set of wells changes; exaggeration is applied client-side
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idKey]);
+
+  // Look-ahead zones: depth-correlation hotspots (Phase 5) on the active well's MD
+  useEffect(() => {
+    setHotspots([]);
+    if (ids.length < 2) return undefined;
+    let cancelled = false;
+    correlationApi
+      .get({ wellIds: ids.slice(0, MAX_CORRELATED), align: 'formation', reference: ids[0] })
+      .then((res) => !cancelled && setHotspots(res.data.hotspots))
+      .catch((err) => console.error('Failed to load correlation hotspots:', err));
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idKey]);
 
@@ -315,6 +333,47 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
       })
     );
 
+    const activePath = scene.wells.find((w) => w.well_id === scene.origin.well_id)?.path;
+    if (show.hotspots && activePath && hotspots.length) {
+      const zones = hotspots.map((h) => ({
+        ...h,
+        path: pathBetween(activePath, h.depth_from, h.depth_to).map((p) => [p[0], p[1], zf(p[2])]),
+      }));
+      out.push(
+        new PathLayer({
+          id: 'hotspot-zones',
+          coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+          data: zones,
+          getPath: (h) => h.path,
+          getColor: (h) => [...HOTSPOT, h.id === picked?.data?.id ? 200 : 120],
+          getWidth: 22,
+          widthUnits: 'pixels',
+          capRounded: true,
+          pickable: true,
+          parameters: { depthWriteEnabled: false },
+          updateTriggers: { getColor: [picked?.data?.id] },
+        }),
+        new TextLayer({
+          id: 'hotspot-labels',
+          coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+          // Label only the strongest zones; the rest explain themselves on hover
+          data: [...zones]
+            .sort((a, b) => b.n_wells - a.n_wells || b.max_severity - a.max_severity)
+            .slice(0, MAX_HOTSPOT_LABELS),
+          getPosition: (h) => h.path[0],
+          getText: (h) => `${h.n_wells} offsets: ${h.dominant_type.replace(/_/g, ' ')}`,
+          getSize: 11,
+          getColor: [120, 53, 15, 255],
+          background: true,
+          getBackgroundColor: [255, 247, 237, 230],
+          backgroundPadding: [4, 2],
+          getTextAnchor: 'start',
+          getAlignmentBaseline: 'center',
+          getPixelOffset: [18, 0],
+        })
+      );
+    }
+
     if (show.events) {
       const evs = scene.wells.flatMap((w) =>
         w.events.map((e) => ({ ...e, well_id: w.well_id, well_name: w.name }))
@@ -374,7 +433,7 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
       );
     }
     return out;
-  }, [scene, ex, show, groundOpacity, groundImage, selectedWellId]);
+  }, [scene, ex, show, groundOpacity, groundImage, selectedWellId, hotspots, picked]);
 
   const onClick = ({ object, layer }) => {
     if (!object || !layer) return;
@@ -383,6 +442,8 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
       setPicked({ kind: 'well', data: object });
     } else if (layer.id === 'events') {
       setPicked({ kind: 'event', data: object });
+    } else if (layer.id === 'hotspot-zones') {
+      setPicked({ kind: 'hotspot', data: object });
     }
   };
 
@@ -409,6 +470,13 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
       };
     }
     if (layer.id === 'formation-surfaces') return { text: `${object.formation} top`, style };
+    if (layer.id === 'hotspot-zones') {
+      return {
+        text: `Offset hotspot ${object.depth_from}-${object.depth_to} m MD (active well)
+${object.summary}`,
+        style,
+      };
+    }
     return null;
   };
 
@@ -506,6 +574,7 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
                 {[
                   ['formations', 'Formation-top surfaces'],
                   ['events', 'Drilling events'],
+                  ['hotspots', 'Offset hotspots on active well'],
                   ['ground', 'Satellite ground surface'],
                   ['labels', 'Well labels'],
                 ].map(([k, label]) => (
@@ -594,6 +663,16 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
                 Selected
               </span>
             </div>
+            {show.hotspots && hotspots.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-4 h-2.5 rounded"
+                  style={{ background: 'rgba(232,135,30,0.55)' }}
+                  aria-hidden="true"
+                />
+                Look-ahead zone: depth where ≥2 correlated wells had events
+              </div>
+            )}
             {show.formations && (
               <div className="flex flex-wrap gap-x-2 gap-y-0.5">
                 {scene.formations.map((f) => (
@@ -634,7 +713,11 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
             <div className="absolute top-16 right-3 z-10 w-64 bg-white/95 backdrop-blur rounded-lg border border-line shadow-sm p-3 text-xs">
               <div className="flex items-start justify-between gap-2">
                 <h4 className="font-bold text-royal-900 capitalize">
-                  {picked.kind === 'event' ? formatEventType(picked.data.type) : picked.data.name}
+                  {picked.kind === 'event'
+                    ? formatEventType(picked.data.type)
+                    : picked.kind === 'hotspot'
+                      ? 'Offset hotspot'
+                      : picked.data.name}
                 </h4>
                 <button
                   type="button"
@@ -645,7 +728,30 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              {picked.kind === 'event' ? (
+              {picked.kind === 'hotspot' ? (
+                <div className="mt-1 space-y-1 text-ink-900">
+                  <p className="text-ink-600 tabular-nums">
+                    {picked.data.depth_from}–{picked.data.depth_to} m MD on the active well
+                    {picked.data.reference_formation && ` · ${picked.data.reference_formation}`}
+                  </p>
+                  <p>{picked.data.summary}.</p>
+                  {picked.data.wells.map((w) => (
+                    <p key={w.well_id} className="text-ink-600 tabular-nums">
+                      {w.well_id}: {w.md_from}–{w.md_to} m MD
+                    </p>
+                  ))}
+                  {picked.data.mitigations.length > 0 && (
+                    <p>
+                      <span className="text-ink-600">Done before:</span>{' '}
+                      {picked.data.mitigations.map((m) => m.text).join('; ')}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-ink-600">
+                    Aligned on formation tops. Offset wells suggest extra care here; the rig
+                    decides.
+                  </p>
+                </div>
+              ) : picked.kind === 'event' ? (
                 <div className="mt-1 space-y-1 text-ink-900">
                   <p className="text-ink-600 tabular-nums">
                     {picked.data.well_name} · {picked.data.depth_from_md}–{picked.data.depth_to_md}{' '}

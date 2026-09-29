@@ -39,7 +39,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col bg-royal-50">
       {/* Top Navigation Header - Royal 900 */}
-      <header className="bg-royal-900 text-white shadow-md z-30">
+      <header className="bg-royal-900 text-white shadow-md z-30 print:hidden">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-md bg-gold-500 flex items-center justify-center text-royal-900 font-bold shadow">
@@ -79,7 +79,7 @@ export default function Layout() {
       {/* Main Layout Container */}
       <div className="flex flex-1">
         {/* Left Sidebar Nav */}
-        <aside className="w-64 bg-white border-r border-line p-4 hidden md:flex flex-col justify-between">
+        <aside className="w-64 bg-white border-r border-line p-4 hidden md:flex flex-col justify-between print:hidden">
           <nav className="space-y-1">
             <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-ink-600">
               Navigation Menu
@@ -121,7 +121,7 @@ export default function Layout() {
       </div>
 
       {/* Official Footer */}
-      <footer className="bg-white border-t border-line py-2.5 px-6 text-center text-xs text-ink-600 flex flex-col md:flex-row justify-between items-center gap-2">
+      <footer className="print:hidden bg-white border-t border-line py-2.5 px-6 text-center text-xs text-ink-600 flex flex-col md:flex-row justify-between items-center gap-2">
         <span>eRTMAC-NWIS v1.0.0 — Decision Support System for Drilling Operations</span>
         <span className="text-[11px] text-ink-600">
           Notice: Advisory system only. Rig supervisor retains final authority.

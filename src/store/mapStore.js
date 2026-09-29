@@ -89,4 +89,9 @@ export const useMapStore = create((set) => ({
       writeStored(CORRELATION_KEY, next);
       return { correlationWellIds: next };
     }),
+  setCorrelationWells: (ids) => {
+    const next = [...new Set(ids)].slice(0, MAX_CORRELATION_WELLS);
+    writeStored(CORRELATION_KEY, next);
+    set({ correlationWellIds: next });
+  },
 }));
