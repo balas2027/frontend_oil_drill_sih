@@ -25,3 +25,27 @@ body {
 .heading-serif {
   font-family: 'Merriweather', serif;
 }
+
+/* Active well marker on the map (gold star) */
+.nwis-active-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #c9a227;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.35), 0 2px 6px rgba(10, 42, 102, 0.35);
+  cursor: default;
+}
+
+.maplibregl-popup-content {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'Inter', sans-serif;
+}
+
+.maplibregl-ctrl-group button:focus-visible {
+  outline: 2px solid #1d4fb8;
+}

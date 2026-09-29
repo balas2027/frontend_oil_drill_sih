@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-oil-drill-sih.vercel.app/api/v1' || 'http://localhost:8000/api/v1';
+// Deployed backend (currently 500 - needs env vars configured on Vercel):
+// const API_BASE_URL = 'https://backend-oil-drill-sih.vercel.app/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
