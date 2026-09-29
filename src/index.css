@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --royal-900: #0A2A66;
+  --royal-700: #123C8F;
+  --royal-600: #1D4FB8;
+  --royal-500: #3B6FD8;
+  --royal-100: #E6EEFB;
+  --royal-50: #F4F7FE;
+  --gold-500: #C9A227;
+  --gold-100: #FBF3D6;
+  --ink-900: #0F172A;
+  --ink-600: #475569;
+  --line: #D6DFEE;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #F4F7FE;
+  color: #0F172A;
+}
+
+.heading-serif {
+  font-family: 'Merriweather', serif;
+}
