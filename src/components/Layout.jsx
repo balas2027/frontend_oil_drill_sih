@@ -1,16 +1,17 @@
 import React from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { 
-  Compass, 
-  LayoutDashboard, 
-  MapPin, 
-  TrendingUp, 
-  AlertTriangle, 
-  BookOpen, 
-  FileText, 
+import {
+  Compass,
+  LayoutDashboard,
+  MapPin,
+  TrendingUp,
+  AlertTriangle,
+  BookOpen,
+  FileText,
   LogOut,
-  UserCheck
+  UserCheck,
+  Database,
 } from 'lucide-react';
 
 export default function Layout() {
@@ -26,6 +27,7 @@ export default function Layout() {
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Map & Nearby Wells', path: '/map', icon: MapPin },
+    { label: 'Data Explorer', path: '/data', icon: Database },
     { label: 'Correlation', path: '/correlation', icon: TrendingUp },
     { label: 'Risk & Alerts', path: '/alerts', icon: AlertTriangle },
     { label: 'Knowledge Base', path: '/knowledge', icon: BookOpen },
@@ -42,7 +44,9 @@ export default function Layout() {
               <Compass className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <span className="text-[10px] tracking-wider uppercase text-gold-500 font-semibold block">Oil India Limited</span>
+              <span className="text-[10px] tracking-wider uppercase text-gold-500 font-semibold block">
+                Oil India Limited
+              </span>
               <h1 className="text-base font-bold tracking-tight leading-none">eRTMAC - NWIS</h1>
             </div>
           </div>
@@ -52,7 +56,9 @@ export default function Layout() {
               <UserCheck className="w-4 h-4 text-gold-500" />
               <div>
                 <span className="font-semibold block text-white">{user?.name || 'Engineer'}</span>
-                <span className="text-[10px] text-royal-100 uppercase tracking-wider">{user?.role || 'Engineer'}</span>
+                <span className="text-[10px] text-royal-100 uppercase tracking-wider">
+                  {user?.role || 'Engineer'}
+                </span>
               </div>
             </div>
 
@@ -78,7 +84,8 @@ export default function Layout() {
             </div>
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive =
+                location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
               return (
                 <Link
                   key={item.path}
@@ -114,7 +121,9 @@ export default function Layout() {
       {/* Official Footer */}
       <footer className="bg-white border-t border-line py-2.5 px-6 text-center text-xs text-ink-600 flex flex-col md:flex-row justify-between items-center gap-2">
         <span>eRTMAC-NWIS v1.0.0 — Decision Support System for Drilling Operations</span>
-        <span className="text-[11px] text-ink-600">Notice: Advisory system only. Rig supervisor retains final authority.</span>
+        <span className="text-[11px] text-ink-600">
+          Notice: Advisory system only. Rig supervisor retains final authority.
+        </span>
       </footer>
     </div>
   );

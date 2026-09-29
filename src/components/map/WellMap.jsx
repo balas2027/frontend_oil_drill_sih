@@ -14,6 +14,7 @@ const SRC = {
   nearby: 'nwis-nearby',
   active: 'nwis-active',
   heat: 'nwis-event-heat',
+  trajectories: 'nwis-trajectories',
   demTerrain: 'nwis-dem-terrain',
   demHillshade: 'nwis-dem-hillshade',
 };
@@ -23,6 +24,7 @@ const LYR = {
   heat: 'nwis-heat',
   radiusFill: 'nwis-radius-fill',
   radiusLine: 'nwis-radius-line',
+  trajectories: 'nwis-trajectories-line',
   allWells: 'nwis-all-wells-circle',
   nearby: 'nwis-nearby-circle',
   highlight: 'nwis-nearby-highlight',
@@ -49,7 +51,8 @@ function setData(map, id, data) {
 }
 
 function ensureLayer(map, layer, beforeId) {
-  if (!map.getLayer(layer.id)) map.addLayer(layer, beforeId && map.getLayer(beforeId) ? beforeId : undefined);
+  if (!map.getLayer(layer.id))
+    map.addLayer(layer, beforeId && map.getLayer(beforeId) ? beforeId : undefined);
 }
 
 const visibility = (on) => (on ? 'visible' : 'none');
@@ -76,7 +79,9 @@ function applyModeExtras(map, modeKey, layers) {
     map.setLayoutProperty(LYR.hillshade, 'visibility', visibility(layers.hillshade));
   }
 
-  map.setTerrain(mode.terrain ? { source: SRC.demTerrain, exaggeration: mode.terrain.exaggeration } : null);
+  map.setTerrain(
+    mode.terrain ? { source: SRC.demTerrain, exaggeration: mode.terrain.exaggeration } : null
+  );
 
   if (mode.terrain || mode.projection === 'globe') {
     map.setSky({
@@ -100,7 +105,9 @@ function syncData(map, p) {
     type: 'FeatureCollection',
     features: p.allWells
       .filter((w) => w.location?.coordinates && w.well_id !== activeId && !nearbyIds.has(w.well_id))
-      .map((w) => point(w.location.coordinates, { well_id: w.well_id, name: w.name, status: w.status })),
+      .map((w) =>
+        point(w.location.coordinates, { well_id: w.well_id, name: w.name, status: w.status })
+      ),
   });
   setData(map, SRC.nearby, {
     type: 'FeatureCollection',
@@ -112,15 +119,29 @@ function syncData(map, p) {
           name: r.well.name,
           similarity: r.similarity,
           total_events: r.total_events,
-        }),
+        })
       ),
   });
   setData(
     map,
     SRC.active,
     p.activeWell?.location?.coordinates
-      ? { type: 'FeatureCollection', features: [point(p.activeWell.location.coordinates, { well_id: activeId, name: p.activeWell.name })] }
-      : EMPTY_FC,
+      ? {
+          type: 'FeatureCollection',
+          features: [
+            point(p.activeWell.location.coordinates, {
+              well_id: activeId,
+              name: p.activeWell.name,
+            }),
+          ],
+        }
+      : EMPTY_FC
+  );
+
+  setData(
+    map,
+    SRC.trajectories,
+    p.layers.trajectories && p.trajectoriesData ? p.trajectoriesData : EMPTY_FC
   );
 
   const heatOn = MAP_MODES[p.mapMode]?.overlay === 'eventHeat';
@@ -137,13 +158,21 @@ function syncData(map, p) {
       'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 6, 12, 10, 40, 13, 70],
       'heatmap-opacity': 0.8,
       'heatmap-color': [
-        'interpolate', ['linear'], ['heatmap-density'],
-        0, 'rgba(59,111,216,0)',
-        0.2, '#3B6FD8',
-        0.45, '#1E8E5A',
-        0.65, '#E0A100',
-        0.85, '#E8871E',
-        1, '#C62D3B',
+        'interpolate',
+        ['linear'],
+        ['heatmap-density'],
+        0,
+        'rgba(59,111,216,0)',
+        0.2,
+        '#3B6FD8',
+        0.45,
+        '#1E8E5A',
+        0.65,
+        '#E0A100',
+        0.85,
+        '#E8871E',
+        1,
+        '#C62D3B',
       ],
     },
   });
@@ -157,7 +186,24 @@ function syncData(map, p) {
     id: LYR.radiusLine,
     type: 'line',
     source: SRC.radius,
-    paint: { 'line-color': '#1D4FB8', 'line-width': 2, 'line-dasharray': [4, 2], 'line-opacity': 0.6 },
+    paint: {
+      'line-color': '#1D4FB8',
+      'line-width': 2,
+      'line-dasharray': [4, 2],
+      'line-opacity': 0.6,
+    },
+  });
+  ensureLayer(map, {
+    id: LYR.trajectories,
+    type: 'line',
+    source: SRC.trajectories,
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      // Plan-view well path from surveys; the active well is drawn in gold
+      'line-color': ['case', ['==', ['get', 'well_id'], activeId || ''], '#C9A227', '#1D4FB8'],
+      'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 14, 4],
+      'line-opacity': 0.85,
+    },
   });
   ensureLayer(map, {
     id: LYR.allWells,
@@ -307,7 +353,8 @@ export default function WellMap(props) {
       el.children[0].textContent = name;
       el.children[1].textContent = `${id} • ${status}`;
       const btn = document.createElement('button');
-      btn.className = 'mt-1 w-full bg-royal-700 hover:bg-royal-900 text-white text-[10px] font-medium px-2 py-1 rounded';
+      btn.className =
+        'mt-1 w-full bg-royal-700 hover:bg-royal-900 text-white text-[10px] font-medium px-2 py-1 rounded';
       btn.textContent = 'Set as active well';
       btn.onclick = () => {
         popupRef.current?.remove();
@@ -355,13 +402,19 @@ export default function WellMap(props) {
 
     readyRef.current = false;
     map.setStyle(mode.style, { diff: false });
-    map.easeTo({ pitch: mode.pitch || 0, bearing: mode.pitch ? map.getBearing() : 0, duration: 800 });
+    map.easeTo({
+      pitch: mode.pitch || 0,
+      bearing: mode.pitch ? map.getBearing() : 0,
+      duration: 800,
+    });
 
     // "Wow" opening for globe: zoom from India to the field
     if (mode.projection === 'globe' && prevMode !== 'globe') {
       const target = propsRef.current.activeWell?.location?.coordinates || FIELD_CENTER;
       map.jumpTo({ center: INDIA_CENTER, zoom: 3 });
-      map.once('style.load', () => map.flyTo({ center: target, zoom: 9.5, duration: 4500, essential: true }));
+      map.once('style.load', () =>
+        map.flyTo({ center: target, zoom: 9.5, duration: 4500, essential: true })
+      );
     }
   }, [props.mapMode]);
 
@@ -369,15 +422,25 @@ export default function WellMap(props) {
   useEffect(() => {
     const map = mapRef.current;
     if (map && readyRef.current) syncData(map, props);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on specific props; others read via propsRef
   }, [
-    props.allWells, props.nearbyWells, props.activeWell, props.radiusCircle,
-    props.selectedWellId, props.hoveredWellId, props.heatmapData, props.layers, props.mapMode,
+    props.allWells,
+    props.nearbyWells,
+    props.activeWell,
+    props.radiusCircle,
+    props.selectedWellId,
+    props.hoveredWellId,
+    props.heatmapData,
+    props.trajectoriesData,
+    props.layers,
+    props.mapMode,
   ]);
 
   // Hillshade toggle may need DEM sources that were not added yet
   useEffect(() => {
     const map = mapRef.current;
     if (map && readyRef.current) applyModeExtras(map, props.mapMode, props.layers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on specific props; others read via propsRef
   }, [props.layers.hillshade]);
 
   // Active well: gold star marker + fly to it
@@ -390,7 +453,12 @@ export default function WellMap(props) {
     markerRef.current = new maplibregl.Marker({ element: starElement(well.name) })
       .setLngLat(well.location.coordinates)
       .addTo(map);
-    map.flyTo({ center: well.location.coordinates, zoom: Math.max(map.getZoom(), 10), duration: 1200 });
+    map.flyTo({
+      center: well.location.coordinates,
+      zoom: Math.max(map.getZoom(), 10),
+      duration: 1200,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on specific props; others read via propsRef
   }, [props.activeWell?.well_id]);
 
   // Keep the selected offset well in view
@@ -404,6 +472,7 @@ export default function WellMap(props) {
     if (px.x < 40 || px.y < 40 || px.x > w - 40 || px.y > h - 40) {
       map.easeTo({ center: coords, duration: 600 });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on specific props; others read via propsRef
   }, [props.selectedWellId]);
 
   // MapLibre forces `position: relative` on its container, so size it from a wrapper

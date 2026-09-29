@@ -69,7 +69,7 @@ export const useMapStore = create((set) => ({
   },
 
   // Layer toggles
-  layers: { labels: true, allWells: true, radius: true, hillshade: true },
+  layers: { labels: true, allWells: true, radius: true, trajectories: true, hillshade: true },
   toggleLayer: (key) => set((s) => ({ layers: { ...s.layers, [key]: !s.layers[key] } })),
 
   // Filters

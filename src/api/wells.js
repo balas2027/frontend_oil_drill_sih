@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 
 /** Drop empty-string params so the API only sees filters that are set. */
-const clean = (params) =>
+export const clean = (params) =>
   Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v != null));
 
 export const wellsApi = {
@@ -11,6 +11,12 @@ export const wellsApi = {
   getWellTops: (wellId) => apiClient.get(`/wells/${wellId}/tops`),
   getWellTrajectory: (wellId) => apiClient.get(`/wells/${wellId}/trajectory`),
   getWellTimeline: (wellId) => apiClient.get(`/wells/${wellId}/timeline`),
+  getDrillingTs: (wellId, params = {}) =>
+    apiClient.get(`/wells/${wellId}/drilling-ts`, { params: clean(params) }),
+  getTrajectories: (wellIds) =>
+    apiClient.get('/wells/trajectories', { params: { well_ids: wellIds.join(',') } }),
+  getSubsurface: (wellIds, origin) =>
+    apiClient.get('/wells/subsurface', { params: { well_ids: wellIds.join(','), origin } }),
 };
 
 export const nearbyApi = {
@@ -21,4 +27,5 @@ export const eventsApi = {
   listEvents: (params = {}) => apiClient.get('/events', { params: clean(params) }),
   getEvent: (eventId) => apiClient.get(`/events/${eventId}`),
   getEventsGeo: (params = {}) => apiClient.get('/events/geo', { params: clean(params) }),
+  updateEvent: (eventId, changes) => apiClient.patch(`/events/${eventId}`, changes),
 };

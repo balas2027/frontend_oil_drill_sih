@@ -44,8 +44,10 @@ export const MAP_MODES = {
     label: 'Satellite',
     style: rasterStyle(
       'esri-imagery',
-      ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-      'Imagery © Esri, Maxar, Earthstar Geographics',
+      [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      ],
+      'Imagery © Esri, Maxar, Earthstar Geographics'
     ),
     pitch: 0,
   },
@@ -55,7 +57,7 @@ export const MAP_MODES = {
       'opentopomap',
       ['a', 'b', 'c'].map((s) => `https://${s}.tile.opentopomap.org/{z}/{x}/{y}.png`),
       'Map © OpenTopoMap (CC-BY-SA), data © OpenStreetMap contributors',
-      17,
+      17
     ),
     pitch: 0,
   },
@@ -80,6 +82,12 @@ export const MAP_MODES = {
     style: STREET_STYLE,
     pitch: 0,
     overlay: 'eventHeat',
+  },
+  subsurface: {
+    label: 'Subsurface 3D',
+    // Separate deck.gl OrbitView scene - a surface map cannot show below ground
+    view: 'subsurface',
+    requiresWebGL2: true,
   },
 };
 

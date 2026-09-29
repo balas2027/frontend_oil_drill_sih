@@ -34,34 +34,76 @@ export default function NearbyFilters({ filters, options, onChange, onReset }) {
 
       <div className="px-4 pb-3 grid grid-cols-2 gap-2">
         <Field label="Formation">
-          <select className={selectCls} value={filters.formation} onChange={(e) => onChange('formation', e.target.value)}>
+          <select
+            className={selectCls}
+            value={filters.formation}
+            onChange={(e) => onChange('formation', e.target.value)}
+          >
             <option value="">Any</option>
-            {options.formations?.map((f) => <option key={f} value={f}>{f}</option>)}
+            {options.formations?.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Status">
-          <select className={selectCls} value={filters.status} onChange={(e) => onChange('status', e.target.value)}>
+          <select
+            className={selectCls}
+            value={filters.status}
+            onChange={(e) => onChange('status', e.target.value)}
+          >
             <option value="">Any</option>
-            {options.statuses?.map((s) => <option key={s} value={s}>{s}</option>)}
+            {options.statuses?.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Event type">
-          <select className={selectCls} value={filters.eventType} onChange={(e) => onChange('eventType', e.target.value)}>
+          <select
+            className={selectCls}
+            value={filters.eventType}
+            onChange={(e) => onChange('eventType', e.target.value)}
+          >
             <option value="">Any</option>
-            {options.event_types?.map((t) => <option key={t} value={t}>{formatEventType(t)}</option>)}
+            {options.event_types?.map((t) => (
+              <option key={t} value={t}>
+                {formatEventType(t)}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Well type">
-          <select className={selectCls} value={filters.trajectoryType} onChange={(e) => onChange('trajectoryType', e.target.value)}>
+          <select
+            className={selectCls}
+            value={filters.trajectoryType}
+            onChange={(e) => onChange('trajectoryType', e.target.value)}
+          >
             <option value="">Any</option>
-            {options.trajectory_types?.map((t) => <option key={t} value={t}>{t}</option>)}
+            {options.trajectory_types?.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Spud from">
-          <input type="date" className={selectCls} value={filters.spudFrom} onChange={(e) => onChange('spudFrom', e.target.value)} />
+          <input
+            type="date"
+            className={selectCls}
+            value={filters.spudFrom}
+            onChange={(e) => onChange('spudFrom', e.target.value)}
+          />
         </Field>
         <Field label="Spud to">
-          <input type="date" className={selectCls} value={filters.spudTo} onChange={(e) => onChange('spudTo', e.target.value)} />
+          <input
+            type="date"
+            className={selectCls}
+            value={filters.spudTo}
+            onChange={(e) => onChange('spudTo', e.target.value)}
+          />
         </Field>
         <button
           type="button"

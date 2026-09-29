@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ShieldCheck, Lock, Mail, Compass, AlertCircle } from 'lucide-react';
 
+// Synthetic demo accounts seeded by the backend (app/routers/auth.py)
+const DEMO_ACCOUNTS = [
+  ['admin', 'admin@oil.in', 'admin123'],
+  ['reviewer', 'reviewer@oil.in', 'reviewer123'],
+  ['engineer', 'engineer@oil.in', 'engineer123'],
+  ['viewer', 'viewer@oil.in', 'viewer123'],
+];
+
 export default function Login() {
   const [email, setEmail] = useState('admin@oil.in');
   const [password, setPassword] = useState('admin123');
@@ -30,7 +38,9 @@ export default function Login() {
               <Compass className="w-7 h-7 stroke-[2.5]" />
             </div>
             <div>
-              <span className="text-xs tracking-wider uppercase text-gold-500 font-semibold">Oil India Limited</span>
+              <span className="text-xs tracking-wider uppercase text-gold-500 font-semibold">
+                Oil India Limited
+              </span>
               <h1 className="text-xl font-bold tracking-tight">eRTMAC - NWIS</h1>
             </div>
           </div>
@@ -40,7 +50,8 @@ export default function Login() {
               Nearby Wells Intelligence System
             </h2>
             <p className="text-royal-100 text-sm leading-relaxed">
-              Giving every drilling engineer the memory of every well ever drilled nearby - and warning them before history repeats.
+              Giving every drilling engineer the memory of every well ever drilled nearby - and
+              warning them before history repeats.
             </p>
           </div>
         </div>
@@ -58,7 +69,9 @@ export default function Login() {
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-line p-8">
           <div className="mb-6">
             <h3 className="text-xl font-bold text-royal-900">Sign in to NWIS Portal</h3>
-            <p className="text-xs text-ink-600 mt-1">Enter your credentials to access the intelligence platform</p>
+            <p className="text-xs text-ink-600 mt-1">
+              Enter your credentials to access the intelligence platform
+            </p>
           </div>
 
           {error && (
@@ -70,7 +83,9 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-ink-900 mb-1">Official Email Address</label>
+              <label className="block text-xs font-semibold text-ink-900 mb-1">
+                Official Email Address
+              </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-ink-600 absolute left-3 top-3" />
                 <input
@@ -100,9 +115,22 @@ export default function Login() {
             </div>
 
             <div className="bg-royal-50 border border-royal-100 rounded-lg p-3 text-xs text-ink-600 space-y-1">
-              <span className="font-semibold text-royal-900">Default Demo Credentials:</span>
-              <p>Email: <code className="text-royal-700 font-mono">admin@oil.in</code></p>
-              <p>Password: <code className="text-royal-700 font-mono">admin123</code></p>
+              <span className="font-semibold text-royal-900">Demo accounts (one per role):</span>
+              {DEMO_ACCOUNTS.map(([role, email, pw]) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => {
+                    setEmail(email);
+                    setPassword(pw);
+                  }}
+                  className="w-full flex justify-between items-center text-left px-1.5 py-0.5 rounded hover:bg-royal-100"
+                >
+                  <span className="capitalize font-medium text-ink-900 w-16">{role}</span>
+                  <code className="text-royal-700 font-mono">{email}</code>
+                  <code className="text-ink-600 font-mono">{pw}</code>
+                </button>
+              ))}
             </div>
 
             <button

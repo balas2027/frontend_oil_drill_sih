@@ -1,5 +1,14 @@
 import React, { useMemo } from 'react';
-import { Map as MapIcon, Satellite, Mountain, Box, Globe2, Flame, Layers } from 'lucide-react';
+import {
+  Map as MapIcon,
+  Satellite,
+  Mountain,
+  Box,
+  Globe2,
+  Flame,
+  Layers,
+  Boxes,
+} from 'lucide-react';
 import { MAP_MODES, supportsWebGL2 } from './mapModes';
 
 const MODE_ICONS = {
@@ -9,12 +18,14 @@ const MODE_ICONS = {
   terrain3d: Box,
   globe: Globe2,
   heatmap: Flame,
+  subsurface: Boxes,
 };
 
 const LAYER_TOGGLES = [
   { key: 'labels', label: 'Well labels' },
   { key: 'allWells', label: 'Other wells' },
   { key: 'radius', label: 'Radius circle' },
+  { key: 'trajectories', label: 'Well trajectories' },
   { key: 'hillshade', label: 'Hillshade', modes: ['terrain', 'terrain3d'] },
 ];
 
@@ -41,7 +52,9 @@ export default function MapModeSwitcher({ mapMode, onModeChange, layers, onToggl
               title={disabled ? `${mode.label} needs WebGL2` : mode.label}
               onClick={() => onModeChange(key)}
               className={`flex items-center gap-1 px-2 py-1.5 text-[11px] rounded-md font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-600 disabled:opacity-40 disabled:cursor-not-allowed ${
-                active ? 'bg-royal-700 text-white' : 'text-ink-600 hover:bg-royal-100 hover:text-royal-900'
+                active
+                  ? 'bg-royal-700 text-white'
+                  : 'text-ink-600 hover:bg-royal-100 hover:text-royal-900'
               }`}
             >
               <Icon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -51,7 +64,11 @@ export default function MapModeSwitcher({ mapMode, onModeChange, layers, onToggl
         })}
       </div>
 
-      <details className="bg-white/95 backdrop-blur rounded-lg border border-line shadow-sm text-[11px] group">
+      <details
+        className={`bg-white/95 backdrop-blur rounded-lg border border-line shadow-sm text-[11px] group ${
+          MAP_MODES[mapMode]?.view ? 'hidden' : ''
+        }`}
+      >
         <summary className="cursor-pointer select-none px-2.5 py-1.5 flex items-center gap-1.5 font-medium text-royal-900 list-none">
           <Layers className="w-3.5 h-3.5 text-royal-700" aria-hidden="true" /> Layers
         </summary>

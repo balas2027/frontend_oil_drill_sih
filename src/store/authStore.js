@@ -1,10 +1,29 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/client';
+import {
+  apiClient,
+  apiErrorMessage,
+  clearSession,
+  storeSession,
+  TOKEN_KEY,
+  USER_KEY,
+} from '../api/client';
+
+function storedUser() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+/** Role checks mirror the backend RBAC matrix. */
+export const canReview = (user) => ['reviewer', 'admin'].includes(user?.role);
+export const isAdmin = (user) => user?.role === 'admin';
 
 export const useAuthStore = create((set) => ({
-  user: JSON.parse(localStorage.getItem('nwis_user') || 'null'),
-  token: localStorage.getItem('nwis_token') || null,
-  isAuthenticated: !!localStorage.getItem('nwis_token'),
+  user: storedUser(),
+  token: localStorage.getItem(TOKEN_KEY) || null,
+  isAuthenticated: !!localStorage.getItem(TOKEN_KEY),
   loading: false,
   error: null,
 
@@ -19,45 +38,40 @@ export const useAuthStore = create((set) => ({
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const { access_token, user } = response.data;
-
-      localStorage.setItem('nwis_token', access_token);
-      localStorage.setItem('nwis_user', JSON.stringify(user));
-
+      storeSession(response.data);
       set({
-        token: access_token,
-        user,
+        token: response.data.access_token,
+        user: response.data.user,
         isAuthenticated: true,
         loading: false,
         error: null,
       });
-
       return true;
     } catch (err) {
-      const errMsg = err.response?.data?.detail || 'Login failed. Please check credentials.';
-      set({ error: errMsg, loading: false });
+      set({
+        error: apiErrorMessage(err, 'Login failed. Please check credentials.'),
+        loading: false,
+      });
       return false;
     }
   },
 
   logout: () => {
-    localStorage.removeItem('nwis_token');
-    localStorage.removeItem('nwis_user');
+    clearSession();
     set({ user: null, token: null, isAuthenticated: false });
   },
 
   checkAuth: async () => {
-    const token = localStorage.getItem('nwis_token');
-    if (!token) {
+    if (!localStorage.getItem(TOKEN_KEY)) {
       set({ isAuthenticated: false, user: null });
       return;
     }
     try {
+      // The client interceptor refreshes an expired access token transparently
       const res = await apiClient.get('/auth/me');
-      set({ user: res.data, isAuthenticated: true });
-    } catch (e) {
-      localStorage.removeItem('nwis_token');
-      localStorage.removeItem('nwis_user');
+      set({ user: res.data, isAuthenticated: true, token: localStorage.getItem(TOKEN_KEY) });
+    } catch {
+      clearSession();
       set({ user: null, token: null, isAuthenticated: false });
     }
   },

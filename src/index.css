@@ -3,23 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --royal-900: #0A2A66;
-  --royal-700: #123C8F;
-  --royal-600: #1D4FB8;
-  --royal-500: #3B6FD8;
-  --royal-100: #E6EEFB;
-  --royal-50: #F4F7FE;
-  --gold-500: #C9A227;
-  --gold-100: #FBF3D6;
-  --ink-900: #0F172A;
+  --royal-900: #0a2a66;
+  --royal-700: #123c8f;
+  --royal-600: #1d4fb8;
+  --royal-500: #3b6fd8;
+  --royal-100: #e6eefb;
+  --royal-50: #f4f7fe;
+  --gold-500: #c9a227;
+  --gold-100: #fbf3d6;
+  --ink-900: #0f172a;
   --ink-600: #475569;
-  --line: #D6DFEE;
+  --line: #d6dfee;
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #F4F7FE;
-  color: #0F172A;
+  background-color: #f4f7fe;
+  color: #0f172a;
 }
 
 .heading-serif {
@@ -36,7 +36,9 @@ body {
   border-radius: 9999px;
   background: #c9a227;
   border: 2px solid #fff;
-  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.35), 0 2px 6px rgba(10, 42, 102, 0.35);
+  box-shadow:
+    0 0 0 3px rgba(201, 162, 39, 0.35),
+    0 2px 6px rgba(10, 42, 102, 0.35);
   cursor: default;
 }
 
@@ -48,4 +50,23 @@ body {
 
 .maplibregl-ctrl-group button:focus-visible {
   outline: 2px solid #1d4fb8;
+}
+
+/* Evidence highlight on a PDF page (gold, gentle pulse) */
+@keyframes nwis-evidence {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(201, 162, 39, 0);
+  }
+}
+.nwis-evidence-pulse {
+  animation: nwis-evidence 1.6s ease-in-out 3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nwis-evidence-pulse {
+    animation: none;
+  }
 }

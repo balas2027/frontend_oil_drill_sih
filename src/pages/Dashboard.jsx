@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { wellsApi, eventsApi } from '../api/wells';
-import { 
-  Compass, Database, Activity, CheckCircle, ShieldAlert, Layers, 
-  MapPin, TrendingUp, FileText, ArrowRight 
+import {
+  Compass,
+  Database,
+  Activity,
+  ShieldAlert,
+  MapPin,
+  TrendingUp,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -27,7 +32,7 @@ export default function Dashboard() {
         setStats({
           wells: wellsRes.data.total,
           events: eventsRes.data.total,
-          drilling: wells.filter(w => w.status === 'drilling').length,
+          drilling: wells.filter((w) => w.status === 'drilling').length,
         });
         setRecentEvents(eventsRes.data.events);
       } catch (err) {
@@ -44,9 +49,13 @@ export default function Dashboard() {
       {/* Top Banner */}
       <div className="bg-white p-6 rounded-xl border border-line shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <span className="text-xs uppercase font-bold tracking-wider text-royal-700">Phase 1 + 2 — Data Foundation + Map</span>
+          <span className="text-xs uppercase font-bold tracking-wider text-royal-700">
+            Phase 1 + 2 — Data Foundation + Map
+          </span>
           <h2 className="text-xl font-bold text-royal-900 font-serif">Command Dashboard</h2>
-          <p className="text-xs text-ink-600 mt-1">Nearby Wells Intelligence System (NWIS) — Upper Assam Basin Demo Data</p>
+          <p className="text-xs text-ink-600 mt-1">
+            Nearby Wells Intelligence System (NWIS) — Upper Assam Basin Demo Data
+          </p>
         </div>
         <button
           onClick={() => navigate('/map')}
@@ -97,7 +106,9 @@ export default function Dashboard() {
           </div>
           <div>
             <span className="text-xs text-ink-600 font-medium">DB Status</span>
-            <p className="text-sm font-bold text-emerald-700 capitalize">{health?.db_status || 'Checking...'}</p>
+            <p className="text-sm font-bold text-emerald-700 capitalize">
+              {health?.db_status || 'Checking...'}
+            </p>
             <span className="text-[10px] text-ink-600">nwis_db @ Atlas</span>
           </div>
         </div>
@@ -129,13 +140,19 @@ export default function Dashboard() {
                   <td className="px-4 py-2.5 font-medium text-royal-900">{evt.well_id}</td>
                   <td className="px-4 py-2.5 capitalize">{(evt.type || '').replace(/_/g, ' ')}</td>
                   <td className="px-4 py-2.5">{evt.formation || '—'}</td>
-                  <td className="px-4 py-2.5 font-mono">{evt.depth_from_md}–{evt.depth_to_md} m</td>
+                  <td className="px-4 py-2.5 font-mono">
+                    {evt.depth_from_md}–{evt.depth_to_md} m
+                  </td>
                   <td className="px-4 py-2.5">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      evt.severity >= 4 ? 'bg-red-50 text-red-700' :
-                      evt.severity >= 3 ? 'bg-orange-50 text-orange-700' :
-                      'bg-green-50 text-green-700'
-                    }`}>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        evt.severity >= 4
+                          ? 'bg-red-50 text-red-700'
+                          : evt.severity >= 3
+                            ? 'bg-orange-50 text-orange-700'
+                            : 'bg-green-50 text-green-700'
+                      }`}
+                    >
                       {evt.severity}/5
                     </span>
                   </td>
@@ -143,7 +160,11 @@ export default function Dashboard() {
                 </tr>
               ))}
               {recentEvents.length === 0 && !loading && (
-                <tr><td colSpan={6} className="text-center py-6 text-ink-600">No events recorded yet</td></tr>
+                <tr>
+                  <td colSpan={6} className="text-center py-6 text-ink-600">
+                    No events recorded yet
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

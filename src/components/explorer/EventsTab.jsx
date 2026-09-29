@@ -1,0 +1,353 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { CheckCircle2, XCircle, ShieldCheck, FileSearch } from 'lucide-react';
+import { eventsApi } from '../../api/wells';
+import { apiErrorMessage } from '../../api/client';
+import { useAuthStore, canReview } from '../../store/authStore';
+import DataTable, { Pagination } from '../common/DataTable';
+import { EVENT_TYPE_COLORS, formatEventType } from '../map/eventStyles';
+
+const LIMIT = 20;
+const inputCls =
+  'text-xs border border-line rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-royal-600 focus:outline-none capitalize';
+
+const STATUS_CHIP = {
+  verified: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  rejected: 'bg-red-50 text-red-700 border-red-200',
+  auto: 'bg-royal-50 text-royal-700 border-royal-100',
+};
+
+function SeverityChip({ value }) {
+  const cls =
+    value >= 4
+      ? 'bg-red-50 text-red-700 border-red-200'
+      : value >= 3
+        ? 'bg-orange-50 text-orange-700 border-orange-200'
+        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  return (
+    <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold tabular-nums ${cls}`}>
+      {value}/5
+    </span>
+  );
+}
+
+function EventDetail({ event, reviewer, onReviewed }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const ctx = event.drilling_context || {};
+  const impact = event.impact || {};
+
+  const review = async (status) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await eventsApi.updateEvent(event._id, { extraction: { status } });
+      onReviewed(res.data);
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Review failed.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="grid md:grid-cols-3 gap-4 text-xs">
+      <div className="md:col-span-2 space-y-1.5">
+        <p>
+          <span className="text-ink-600">Description:</span> {event.description || '—'}
+        </p>
+        <p>
+          <span className="text-ink-600">Cause:</span> {event.cause || '—'}
+        </p>
+        <p>
+          <span className="text-ink-600">Mitigation:</span>{' '}
+          <b className="text-royal-900">{event.mitigation || '—'}</b>
+        </p>
+        <p>
+          <span className="text-ink-600">Outcome:</span> {event.outcome || '—'}
+        </p>
+        <p className="tabular-nums">
+          <span className="text-ink-600">Impact:</span> NPT {impact.npt_hours ?? '—'} h · Cost ₹
+          {impact.cost_inr?.toLocaleString('en-IN') ?? '—'}
+          {impact.volume_lost_bbl != null && ` · Lost ${impact.volume_lost_bbl} bbl`}
+        </p>
+      </div>
+      <div className="space-y-2">
+        <h4 className="text-[10px] uppercase font-bold tracking-wider text-royal-700">
+          Drilling context
+        </h4>
+        <p className="tabular-nums text-ink-900">
+          MW {ctx.mud_weight ?? '—'} sg · ROP {ctx.rop ?? '—'} m/h · WOB {ctx.wob ?? '—'} t · RPM{' '}
+          {ctx.rpm ?? '—'} · Torque {ctx.torque ?? '—'} · SPP {ctx.spp ?? '—'} psi · Flow{' '}
+          {ctx.flow_in ?? '—'} gpm
+        </p>
+        <p className="text-ink-600">
+          Extraction: {event.extraction?.model_version || '—'}, confidence{' '}
+          {event.extraction?.confidence != null
+            ? Math.round(event.extraction.confidence * 100) + '%'
+            : '—'}
+          {event.extraction?.verified_by && ` · reviewed by ${event.extraction.verified_by}`}
+        </p>
+        <p>
+          {event.source?.doc_id && !event.source.doc_deleted ? (
+            <Link
+              to={`/documents/${event.source.doc_id}?page=${event.source.page || 1}${
+                event.source.bbox ? `&bbox=${event.source.bbox.join(',')}` : ''
+              }`}
+              className="inline-flex items-center gap-1 text-royal-600 hover:underline font-medium"
+            >
+              <FileSearch className="w-3.5 h-3.5" aria-hidden="true" /> View source (page{' '}
+              {event.source.page})
+            </Link>
+          ) : (
+            <span className="text-ink-600">No source document linked yet</span>
+          )}
+        </p>
+        {reviewer && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={busy || event.extraction?.status === 'verified'}
+              onClick={() => review('verified')}
+              className="flex items-center gap-1 bg-royal-700 hover:bg-royal-900 text-white text-[11px] font-medium px-2.5 py-1.5 rounded-md disabled:opacity-40"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Verify
+            </button>
+            <button
+              type="button"
+              disabled={busy || event.extraction?.status === 'rejected'}
+              onClick={() => review('rejected')}
+              className="flex items-center gap-1 border border-red-600 text-red-700 hover:bg-red-50 text-[11px] font-medium px-2.5 py-1.5 rounded-md disabled:opacity-40"
+            >
+              <XCircle className="w-3.5 h-3.5" aria-hidden="true" /> Reject
+            </button>
+          </div>
+        )}
+        {error && <p className="text-red-700">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
+  const user = useAuthStore((s) => s.user);
+  const reviewer = canReview(user);
+  const [filters, setFilters] = useState({
+    type: '',
+    formation: '',
+    depth_from: '',
+    depth_to: '',
+    min_severity: '',
+    status: '',
+  });
+  const [sort, setSort] = useState('depth_from_md');
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState({ events: [], total: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const timer = setTimeout(() => {
+      eventsApi
+        .listEvents({ ...filters, well_id: wellFilter, sort, page, limit: LIMIT })
+        .then((res) => {
+          if (cancelled) return;
+          setData(res.data);
+          setError(null);
+        })
+        .catch((err) => !cancelled && setError(apiErrorMessage(err, 'Could not load events.')))
+        .finally(() => !cancelled && setLoading(false));
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [filters, wellFilter, sort, page]);
+
+  const setFilter = (key, value) => {
+    setFilters((f) => ({ ...f, [key]: value }));
+    setPage(1);
+  };
+
+  const onReviewed = (updated) =>
+    setData((d) => ({ ...d, events: d.events.map((e) => (e._id === updated._id ? updated : e)) }));
+
+  const columns = [
+    { key: 'well_id', label: 'Well', sortKey: 'well_id', className: 'font-mono text-royal-900' },
+    {
+      key: 'type',
+      label: 'Type',
+      sortKey: 'type',
+      render: (e) => (
+        <span className="inline-flex items-center gap-1.5 capitalize">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: EVENT_TYPE_COLORS[e.type] || '#94A3B8' }}
+            aria-hidden="true"
+          />
+          {formatEventType(e.type)}
+        </span>
+      ),
+    },
+    { key: 'formation', label: 'Formation' },
+    {
+      key: 'depth',
+      label: 'Depth (m MD)',
+      sortKey: 'depth_from_md',
+      className: 'tabular-nums whitespace-nowrap',
+      render: (e) => `${e.depth_from_md}–${e.depth_to_md}`,
+    },
+    {
+      key: 'severity',
+      label: 'Severity',
+      sortKey: 'severity',
+      render: (e) => <SeverityChip value={e.severity} />,
+    },
+    {
+      key: 'status',
+      label: 'Review',
+      render: (e) => {
+        const st = e.extraction?.status || 'auto';
+        return (
+          <span
+            className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold capitalize ${STATUS_CHIP[st] || ''}`}
+          >
+            {st}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      sortKey: 'date',
+      className: 'tabular-nums',
+      render: (e) => e.date?.slice(0, 10) ?? '—',
+    },
+    { key: 'mitigation', label: 'Mitigation', className: 'max-w-[220px] truncate' },
+  ];
+
+  return (
+    <div>
+      <div className="p-3 flex flex-wrap gap-2 border-b border-line items-center">
+        <select
+          aria-label="Well"
+          className={`${inputCls} normal-case`}
+          value={wellFilter}
+          onChange={(e) => {
+            onWellFilterChange(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All wells</option>
+          {options.wellIds?.map((w) => (
+            <option key={w} value={w}>
+              {w}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Event type"
+          className={inputCls}
+          value={filters.type}
+          onChange={(e) => setFilter('type', e.target.value)}
+        >
+          <option value="">Any type</option>
+          {options.event_types?.map((t) => (
+            <option key={t} value={t}>
+              {formatEventType(t)}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Formation"
+          className={inputCls}
+          value={filters.formation}
+          onChange={(e) => setFilter('formation', e.target.value)}
+        >
+          <option value="">Any formation</option>
+          {options.formations?.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+        <input
+          aria-label="Depth from (m)"
+          type="number"
+          min={0}
+          placeholder="From m"
+          value={filters.depth_from}
+          onChange={(e) => setFilter('depth_from', e.target.value)}
+          className={`${inputCls} w-24`}
+        />
+        <input
+          aria-label="Depth to (m)"
+          type="number"
+          min={0}
+          placeholder="To m"
+          value={filters.depth_to}
+          onChange={(e) => setFilter('depth_to', e.target.value)}
+          className={`${inputCls} w-24`}
+        />
+        <select
+          aria-label="Minimum severity"
+          className={inputCls}
+          value={filters.min_severity}
+          onChange={(e) => setFilter('min_severity', e.target.value)}
+        >
+          <option value="">Any severity</option>
+          {[2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              ≥ {n}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Review status"
+          className={inputCls}
+          value={filters.status}
+          onChange={(e) => setFilter('status', e.target.value)}
+        >
+          <option value="">Any review status</option>
+          {['auto', 'verified', 'rejected'].map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        {reviewer && (
+          <span className="ml-auto text-[10px] text-emerald-800 flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" /> You can verify events
+          </span>
+        )}
+      </div>
+      {error && (
+        <p className="m-3 p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">
+          {error}
+        </p>
+      )}
+      <DataTable
+        columns={columns}
+        rows={data.events}
+        rowKey={(e) => e._id}
+        sort={sort}
+        onSort={(s) => {
+          setSort(s);
+          setPage(1);
+        }}
+        expandedKey={expanded}
+        onToggle={(k) => setExpanded(expanded === k ? null : k)}
+        renderExpanded={(e) => (
+          <EventDetail event={e} reviewer={reviewer} onReviewed={onReviewed} />
+        )}
+        loading={loading}
+        emptyText="No events match these filters."
+      />
+      <Pagination page={page} limit={LIMIT} total={data.total} onPage={setPage} />
+    </div>
+  );
+}

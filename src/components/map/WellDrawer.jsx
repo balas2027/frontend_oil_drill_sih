@@ -1,6 +1,13 @@
 import React from 'react';
 import {
-  X, Info, ChevronRight, AlertTriangle, Star, GitCompareArrows, Check, Layers,
+  X,
+  Info,
+  ChevronRight,
+  AlertTriangle,
+  Star,
+  GitCompareArrows,
+  Check,
+  Layers,
 } from 'lucide-react';
 import { EVENT_TYPE_COLORS, formatEventType } from './eventStyles';
 
@@ -32,14 +39,26 @@ function SectionTitle({ icon: Icon, children }) {
 
 function SeverityChip({ value }) {
   const cls =
-    value >= 4 ? 'bg-red-50 text-red-700 border-red-200'
-    : value >= 3 ? 'bg-orange-50 text-orange-700 border-orange-200'
-    : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  return <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold tabular-nums ${cls}`}>Sev {value}/5</span>;
+    value >= 4
+      ? 'bg-red-50 text-red-700 border-red-200'
+      : value >= 3
+        ? 'bg-orange-50 text-orange-700 border-orange-200'
+        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  return (
+    <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold tabular-nums ${cls}`}>
+      Sev {value}/5
+    </span>
+  );
 }
 
 export default function WellDrawer({
-  result, weights, onClose, onMakeActive, inCorrelation, correlationFull, onToggleCorrelation,
+  result,
+  weights,
+  onClose,
+  onMakeActive,
+  inCorrelation,
+  correlationFull,
+  onToggleCorrelation,
 }) {
   const { well } = result;
   const fmt = (v, unit = '') => (v == null ? '—' : `${v}${unit}`);
@@ -52,9 +71,15 @@ export default function WellDrawer({
       <div className="p-4 border-b border-line flex items-start justify-between bg-royal-50 sticky top-0 z-10">
         <div>
           <h3 className="text-sm font-bold text-royal-900">{well.name}</h3>
-          <p className="text-[10px] text-ink-600 mt-0.5">{well.well_id} • {well.field}</p>
+          <p className="text-[10px] text-ink-600 mt-0.5">
+            {well.well_id} • {well.field}
+          </p>
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-royal-100 rounded" aria-label="Close details">
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-royal-100 rounded"
+          aria-label="Close details"
+        >
           <X className="w-4 h-4 text-ink-600" />
         </button>
       </div>
@@ -77,12 +102,20 @@ export default function WellDrawer({
           <button
             onClick={onToggleCorrelation}
             disabled={!inCorrelation && correlationFull}
-            title={!inCorrelation && correlationFull ? 'Correlation holds up to 5 wells' : undefined}
+            title={
+              !inCorrelation && correlationFull ? 'Correlation holds up to 5 wells' : undefined
+            }
             className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-medium py-1.5 rounded-md border disabled:opacity-40 ${
-              inCorrelation ? 'bg-gold-100 border-gold-500 text-royal-900' : 'border-royal-700 text-royal-700 hover:bg-royal-100'
+              inCorrelation
+                ? 'bg-gold-100 border-gold-500 text-royal-900'
+                : 'border-royal-700 text-royal-700 hover:bg-royal-100'
             }`}
           >
-            {inCorrelation ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <GitCompareArrows className="w-3.5 h-3.5" aria-hidden="true" />}
+            {inCorrelation ? (
+              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+            ) : (
+              <GitCompareArrows className="w-3.5 h-3.5" aria-hidden="true" />
+            )}
             {inCorrelation ? 'In correlation' : 'Add to correlation'}
           </button>
         </div>
@@ -92,8 +125,14 @@ export default function WellDrawer({
             <SectionTitle icon={Info}>Why similar</SectionTitle>
             <ul className="space-y-1">
               {result.why_similar.map((reason) => (
-                <li key={reason} className="flex items-start gap-2 text-xs bg-royal-50 p-2 rounded-lg border border-royal-100">
-                  <ChevronRight className="w-3 h-3 text-royal-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <li
+                  key={reason}
+                  className="flex items-start gap-2 text-xs bg-royal-50 p-2 rounded-lg border border-royal-100"
+                >
+                  <ChevronRight
+                    className="w-3 h-3 text-royal-600 shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
                   <span className="text-royal-900">{reason}</span>
                 </li>
               ))}
@@ -109,13 +148,19 @@ export default function WellDrawer({
               return (
                 <li key={key} className="text-[11px]">
                   <div className="flex justify-between text-ink-600">
-                    <span>{COMPONENT_LABELS[key] || key} <span className="text-[10px]">(w {weight})</span></span>
+                    <span>
+                      {COMPONENT_LABELS[key] || key}{' '}
+                      <span className="text-[10px]">(w {weight})</span>
+                    </span>
                     <span className="tabular-nums font-medium text-royal-900">
                       {Math.round(value * 100)}% → +{(value * weight * 100).toFixed(1)}
                     </span>
                   </div>
                   <div className="h-1.5 bg-royal-100 rounded-full mt-0.5 overflow-hidden">
-                    <div className="h-full bg-royal-500 rounded-full" style={{ width: `${value * 100}%` }} />
+                    <div
+                      className="h-full bg-royal-500 rounded-full"
+                      style={{ width: `${value * 100}%` }}
+                    />
                   </div>
                 </li>
               );
@@ -148,9 +193,16 @@ export default function WellDrawer({
               {Object.entries(result.event_counts)
                 .sort((a, b) => b[1] - a[1])
                 .map(([type, count]) => (
-                  <li key={type} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-slate-50">
+                  <li
+                    key={type}
+                    className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-slate-50"
+                  >
                     <span className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: EVENT_TYPE_COLORS[type] || '#94A3B8' }} aria-hidden="true" />
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: EVENT_TYPE_COLORS[type] || '#94A3B8' }}
+                        aria-hidden="true"
+                      />
                       <span className="capitalize text-ink-900">{formatEventType(type)}</span>
                     </span>
                     <span className="font-bold text-royal-900 tabular-nums">{count}</span>
@@ -167,14 +219,18 @@ export default function WellDrawer({
                   style={{ borderLeftColor: EVENT_TYPE_COLORS[ev.type] || '#94A3B8' }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-royal-900 capitalize">{formatEventType(ev.type)}</span>
+                    <span className="font-semibold text-royal-900 capitalize">
+                      {formatEventType(ev.type)}
+                    </span>
                     <SeverityChip value={ev.severity} />
                   </div>
                   <p className="text-ink-600 mt-0.5 tabular-nums">
                     {ev.depth_from_md}–{ev.depth_to_md} m MD • {ev.formation || '—'}
                   </p>
                   {ev.mitigation && (
-                    <p className="mt-1 text-ink-900"><span className="text-ink-600">Mitigation:</span> {ev.mitigation}</p>
+                    <p className="mt-1 text-ink-900">
+                      <span className="text-ink-600">Mitigation:</span> {ev.mitigation}
+                    </p>
                   )}
                 </li>
               ))}
