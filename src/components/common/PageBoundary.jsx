@@ -1,3 +1,4 @@
+import i18n from '../../i18n';
 import { Component, Suspense } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
@@ -29,11 +30,11 @@ export class PageErrorBoundary extends Component {
       >
         <div className="flex items-center gap-2 text-royal-900 font-bold">
           <AlertTriangle className="w-5 h-5 text-[#E8871E]" aria-hidden="true" />
-          {chunk ? 'This page was updated' : 'This page could not be displayed'}
+          {chunk ? i18n.t('boundary.updated_title') : i18n.t('boundary.error_title')}
         </div>
         <p className="text-ink-600 mt-2 text-xs">
           {chunk
-            ? 'A newer version of the application is available. Reload to continue.'
+            ? i18n.t('boundary.updated_body')
             : String(this.state.error?.message || this.state.error)}
         </p>
         <button
@@ -41,7 +42,7 @@ export class PageErrorBoundary extends Component {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-1.5 bg-royal-700 hover:bg-royal-900 text-white text-xs font-medium px-3 py-2 rounded-lg"
         >
-          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Reload page
+          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {i18n.t('boundary.reload')}
         </button>
       </div>
     );

@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Radar, AlertTriangle } from 'lucide-react';
-import { EVENT_DENSITY_STOPS } from './eventStyles';
+import { EVENT_DENSITY_STOPS, formatStatusWord } from './eventStyles';
 
 const densityStop = (n) => [...EVENT_DENSITY_STOPS].reverse().find((s) => n >= s.min);
 
 function SimilarityBadge({ value }) {
+  const { t } = useTranslation();
   const pct = Math.round(value * 100);
   const cls =
     value >= 0.6
@@ -15,7 +17,7 @@ function SimilarityBadge({ value }) {
   return (
     <span
       className={`text-xs font-bold px-1.5 py-0.5 rounded border tabular-nums ${cls}`}
-      title="Similarity score"
+      title={t('map.list.similarity')}
     >
       {pct}%
     </span>
@@ -34,6 +36,7 @@ export default function NearbyList({
   onSelect,
   onHover,
 }) {
+  const { t } = useTranslation();
   const itemRefs = useRef({});
 
   // Map click -> scroll the matching list row into view
@@ -45,13 +48,13 @@ export default function NearbyList({
     <div className="flex-1 overflow-y-auto" aria-busy={loading}>
       <div className="px-3 py-2 flex items-center justify-between sticky top-0 bg-white z-10 border-b border-line">
         <span className="text-[10px] uppercase font-bold tracking-wider text-royal-700">
-          Offset wells ({results.length})
+          {t('map.list.title', { n: results.length })}
         </span>
         <span className="text-[10px] tabular-nums" aria-live="polite">
           {loading ? (
-            <span className="text-gold-500 animate-pulse">Updating…</span>
+            <span className="text-gold-500 animate-pulse">{t('map.list.updating')}</span>
           ) : latencyMs != null ? (
-            <span className="text-ink-600">updated in {latencyMs} ms</span>
+            <span className="text-ink-600">{t('map.list.updated', { ms: latencyMs })}</span>
           ) : null}
         </span>
       </div>
@@ -105,9 +108,9 @@ export default function NearbyList({
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 ml-[22px] text-[10px] text-ink-600 tabular-nums">
-                      <span>{r.distance_km} km</span>
+                      <span>{r.distance_km} {t('units.km')}</span>
                       <span aria-hidden="true">•</span>
-                      <span className="capitalize">{r.well.status}</span>
+                      <span className="capitalize">{formatStatusWord(r.well.status)}</span>
                       <span aria-hidden="true">•</span>
                       <span className="flex items-center gap-1">
                         <span
@@ -115,7 +118,7 @@ export default function NearbyList({
                           style={{ '--tw-ring-color': density.color }}
                           aria-hidden="true"
                         />
-                        {r.total_events} events
+                        {t('map.list.events', { n: r.total_events })}
                       </span>
                     </div>
                   </div>
@@ -142,8 +145,8 @@ export default function NearbyList({
       {!loading && !error && results.length === 0 && (
         <div className="p-6 text-center text-xs text-ink-600">
           <Radar className="w-8 h-8 mx-auto text-ink-600/30 mb-2" aria-hidden="true" />
-          No offset wells within {radiusKm} km for the current filters.
-          <p className="mt-1 text-[11px]">Widen the radius or reset filters.</p>
+          {t('map.list.empty', { km: radiusKm })}
+          <p className="mt-1 text-[11px]">{t('map.list.empty_hint')}</p>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { adminApi } from '../../api/admin';
 import { apiErrorMessage } from '../../api/client';
@@ -24,7 +25,7 @@ export default function AuditTab() {
           setData(res.data);
           setError(null);
         })
-        .catch((err) => setError(apiErrorMessage(err, 'Could not load the audit log.')));
+        .catch((err) => setError(apiErrorMessage(err, i18n.t('admin.audit.load_error'))));
     }, 250);
     return () => clearTimeout(timer);
   }, [filters, page]);
@@ -126,7 +127,7 @@ export default function AuditTab() {
           disabled={page <= 1}
           onClick={() => setPage(page - 1)}
           className="p-1 rounded border border-line disabled:opacity-40"
-          aria-label="Previous page"
+          aria-label={t('docs.pdf.prev')}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -138,7 +139,7 @@ export default function AuditTab() {
           disabled={page >= pages}
           onClick={() => setPage(page + 1)}
           className="p-1 rounded border border-line disabled:opacity-40"
-          aria-label="Next page"
+          aria-label={t('docs.pdf.next')}
         >
           <ChevronRight className="w-4 h-4" />
         </button>

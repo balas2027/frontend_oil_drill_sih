@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, AlertTriangle, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { documentsApi } from '../api/documents';
 import { wellsApi } from '../api/wells';
 import { apiErrorMessage } from '../api/client';
@@ -16,6 +17,7 @@ import { formatEventType, EVENT_TYPE_COLORS } from '../components/map/eventStyle
 const PdfViewer = lazy(() => import('../components/documents/PdfViewer'));
 
 export default function DocumentDetail() {
+  const { t } = useTranslation();
   const { docId } = useParams();
   const [params, setParams] = useSearchParams();
   const user = useAuthStore((s) => s.user);
@@ -39,10 +41,10 @@ export default function DocumentDetail() {
       setError(null);
       return ['queued', 'processing'].includes(d.data.status);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not load the document.'));
+      setError(apiErrorMessage(err, t('docs.detail.load_error')));
       return false;
     }
-  }, [docId]);
+  }, [docId, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,10 +76,10 @@ export default function DocumentDetail() {
         label: i.evidence.snippet,
       }));
     if (linkedBbox?.length === 4 && linkedBbox.every((n) => !Number.isNaN(n))) {
-      hs.push({ bbox: linkedBbox, page, tone: 'primary', label: 'Linked evidence' });
+      hs.push({ bbox: linkedBbox, page, tone: 'primary', label: t('docs.detail.linked') });
     }
     return hs;
-  }, [items, selectedItem, linkedBbox, page]);
+  }, [items, selectedItem, linkedBbox, page, t]);
 
   const go = (next) => {
     const merged = Object.fromEntries(params.entries());
@@ -90,10 +92,10 @@ export default function DocumentDetail() {
     setActionMsg(null);
     try {
       await documentsApi.reprocess(docId);
-      setActionMsg('Re-processing queued.');
+      setActionMsg(t('docs.detail.reprocess_queued'));
       load();
     } catch (err) {
-      setActionMsg(apiErrorMessage(err, 'Could not reprocess.'));
+      setActionMsg(apiErrorMessage(err, t('docs.detail.reprocess_failed')));
     }
   };
 
@@ -103,12 +105,12 @@ export default function DocumentDetail() {
       const res = await documentsApi.update(docId, { well_id: wellId });
       setActionMsg(
         res.data.reprocess_job_id
-          ? `Linked to ${wellId}; re-running extraction.`
-          : `Linked to ${wellId}.`
+          ? t('docs.detail.linked_rerun', { well: wellId })
+          : t('docs.detail.linked_to', { well: wellId })
       );
       load();
     } catch (err) {
-      setActionMsg(apiErrorMessage(err, 'Could not update the well.'));
+      setActionMsg(apiErrorMessage(err, t('docs.detail.well_failed')));
     }
   };
 
@@ -116,7 +118,7 @@ export default function DocumentDetail() {
     return (
       <p className="p-3 text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</p>
     );
-  if (!doc) return <p className="p-6 text-sm text-royal-700 animate-pulse">Loading document…</p>;
+  if (!doc) return <p className="p-6 text-sm text-royal-700 animate-pulse">{t('docs.detail.loading')}</p>;
 
   const job = doc.job;
   return (
@@ -126,7 +128,7 @@ export default function DocumentDetail() {
           to="/documents"
           className="text-[11px] text-royal-600 hover:underline inline-flex items-center gap-1"
         >
-          <ArrowLeft className="w-3 h-3" aria-hidden="true" /> All documents
+          <ArrowLeft className="w-3 h-3" aria-hidden="true" /> {t('docs.detail.all')}
         </Link>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
@@ -135,11 +137,12 @@ export default function DocumentDetail() {
               {doc.filename}
             </h2>
             <p className="text-xs text-ink-600 mt-0.5 tabular-nums">
-              {doc.doc_type} · {doc.pages} page(s) · {doc.pdf_kind}
+              {doc.doc_type} · {t('docs.upload.pages', { n: doc.pages })} · {doc.pdf_kind}
               {doc.ocr_mean_conf != null &&
-                ` · mean OCR confidence ${Math.round(doc.ocr_mean_conf * 100)}%`}
-              {doc.fields?.report_date && ` · report date ${doc.fields.report_date}`} · uploaded by{' '}
-              {doc.uploaded_by}
+                ` · ${t('docs.detail.ocr_conf', { v: Math.round(doc.ocr_mean_conf * 100) })}`}
+              {doc.fields?.report_date &&
+                ` · ${t('docs.detail.report_date', { date: doc.fields.report_date })}`}{' '}
+              · {t('docs.detail.uploaded_by', { who: doc.uploaded_by })}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -149,14 +152,14 @@ export default function DocumentDetail() {
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <label className="flex items-center gap-2">
-            <span className="text-ink-600">Well</span>
+            <span className="text-ink-600">{t('explorer.cols.well')}</span>
             <select
               value={doc.well_id || ''}
               disabled={!reviewer}
               onChange={(e) => e.target.value && assignWell(e.target.value)}
               className="text-xs border border-line rounded-md px-2 py-1 bg-white disabled:bg-slate-50"
             >
-              <option value="">Unmatched - select…</option>
+              <option value="">{t('docs.detail.unmatched')}</option>
               {wellIds.map((w) => (
                 <option key={w} value={w}>
                   {w}
@@ -165,7 +168,7 @@ export default function DocumentDetail() {
             </select>
             {doc.well_match?.method && (
               <span className="text-[10px] text-ink-600">
-                (matched by {doc.well_match.method.replace('_', ' ')}
+                ({t('docs.detail.matched_by', { method: doc.well_match.method.replace('_', ' ') })}
                 {doc.well_match.score != null && `, ${Math.round(doc.well_match.score * 100)}%`})
               </span>
             )}
@@ -176,17 +179,17 @@ export default function DocumentDetail() {
               onClick={reprocess}
               className="inline-flex items-center gap-1 border border-royal-700 text-royal-700 hover:bg-royal-100 px-2 py-1 rounded-md"
             >
-              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Re-process
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {t('docs.detail.reprocess')}
             </button>
           )}
           {(doc.flags || []).includes('low_ocr_confidence') && (
             <span className="inline-flex items-center gap-1 text-[#6B5310] bg-gold-100 border border-gold-500/40 px-2 py-0.5 rounded">
-              <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" /> Some pages are hard to
-              read - check them manually
+              <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />{' '}
+              {t('docs.detail.low_ocr')}
             </span>
           )}
           {doc.status === 'failed' && (
-            <span className="text-red-700">Processing failed: {doc.error}</span>
+            <span className="text-red-700">{t('docs.detail.failed', { error: doc.error })}</span>
           )}
           {actionMsg && <span className="text-royal-900">{actionMsg}</span>}
         </div>
@@ -194,7 +197,7 @@ export default function DocumentDetail() {
 
       <div className="grid lg:grid-cols-5 gap-4">
         <div className="lg:col-span-3 bg-white rounded-xl border border-line shadow-sm overflow-hidden h-[75vh] flex flex-col">
-          <Suspense fallback={<p className="p-4 text-xs text-ink-600">Loading viewer…</p>}>
+          <Suspense fallback={<p className="p-4 text-xs text-ink-600">{t('docs.split.loading_viewer')}</p>}>
             <PdfViewer
               docId={docId}
               page={page}
@@ -206,14 +209,14 @@ export default function DocumentDetail() {
         <aside className="lg:col-span-2 bg-white rounded-xl border border-line shadow-sm overflow-hidden flex flex-col h-[75vh]">
           <div className="px-3 py-2 border-b border-line flex items-center justify-between">
             <h3 className="text-[10px] uppercase font-bold tracking-wider text-royal-700">
-              Extracted items ({items.length})
+              {t('docs.detail.items', { n: items.length })}
             </h3>
             {items.some((i) => i.status === 'pending') && (
               <Link
                 to="/documents?tab=review"
                 className="text-[11px] text-royal-600 hover:underline"
               >
-                Open review queue
+                {t('docs.detail.open_queue')}
               </Link>
             )}
           </div>
@@ -239,7 +242,7 @@ export default function DocumentDetail() {
                             aria-hidden="true"
                           />
                         )}
-                        {it.kind === 'event' ? formatEventType(v.type) : `Top · ${v.formation}`}
+                        {it.kind === 'event' ? formatEventType(v.type) : `${t('docs.review.top')} · ${v.formation}`}
                       </span>
                       <span className="flex items-center gap-1">
                         <ConfidenceBadge value={it.confidence} />
@@ -247,11 +250,11 @@ export default function DocumentDetail() {
                       </span>
                     </div>
                     <p className="text-[11px] text-ink-600 tabular-nums mt-0.5">
-                      p.{it.evidence?.page} ·{' '}
+                      {t('docs.review.page_short', { page: it.evidence?.page })} ·{' '}
                       {it.kind === 'event'
                         ? `${v.depth_from_md ?? '?'}–${v.depth_to_md ?? '?'} m MD${v.formation ? ` · ${v.formation}` : ''}`
                         : `${v.top_md}–${v.base_md ?? '?'} m MD`}
-                      {it.duplicate_of && ' · matches existing record'}
+                      {it.duplicate_of && ` · ${t('docs.detail.matches_existing')}`}
                     </p>
                     {it.kind === 'event' && (
                       <p className="text-[11px] text-ink-900 mt-0.5 line-clamp-2">
@@ -265,8 +268,8 @@ export default function DocumentDetail() {
             {items.length === 0 && (
               <li className="p-6 text-center text-xs text-ink-600">
                 {['queued', 'processing'].includes(doc.status)
-                  ? 'Processing…'
-                  : 'No items were extracted.'}
+                  ? t('docs.detail.processing')
+                  : t('docs.detail.no_items')}
               </li>
             )}
           </ul>

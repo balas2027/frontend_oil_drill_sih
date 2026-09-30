@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { KeyRound, UserPlus } from 'lucide-react';
 import { adminApi } from '../../api/admin';
 import { apiErrorMessage } from '../../api/client';
@@ -23,7 +24,7 @@ export default function UsersTab() {
     adminApi
       .users()
       .then((res) => setUsers(res.data.users))
-      .catch((err) => setError(apiErrorMessage(err, 'Could not load users.')));
+      .catch((err) => setError(apiErrorMessage(err, i18n.t('admin.users.load_error'))));
   useEffect(() => {
     load();
   }, []);
@@ -38,7 +39,7 @@ export default function UsersTab() {
       await load();
       return true;
     } catch (err) {
-      setError(apiErrorMessage(err, 'Request failed.'));
+      setError(apiErrorMessage(err, t('admin.request_failed')));
       return false;
     } finally {
       setBusy(null);
@@ -147,7 +148,7 @@ export default function UsersTab() {
               <th className="px-3 py-2">{t('admin.users.active')}</th>
               <th className="px-3 py-2">{t('admin.users.last_activity')}</th>
               <th className="px-3 py-2">
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{t('admin.users.actions')}</span>
               </th>
             </tr>
           </thead>
@@ -160,7 +161,7 @@ export default function UsersTab() {
                 <td className="px-3 py-2 font-medium text-royal-900">
                   {u.name}
                   {u.email === me?.email && (
-                    <span className="ml-1 text-[10px] text-ink-600">(you)</span>
+                    <span className="ml-1 text-[10px] text-ink-600">({t('admin.users.you')})</span>
                   )}
                 </td>
                 <td className="px-3 py-2">{u.email}</td>

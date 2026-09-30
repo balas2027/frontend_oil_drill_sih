@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 const FIELD_KEY = 'nwis_field_mode';
 const SYNC_KEY = 'nwis_last_sync';
+const SIDEBAR_KEY = 'nwis_sidebar_open';
 const SYNC_THROTTLE_MS = 5000;
 
 function read(key, fallback) {
@@ -28,6 +29,7 @@ function applyFieldMode(on) {
 /** UI preferences and connectivity (Section 9 field mode, Section 11 offline banner). */
 export const useUiStore = create((set) => {
   const fieldMode = read(FIELD_KEY, false);
+  const sidebarOpen = read(SIDEBAR_KEY, true);
   applyFieldMode(fieldMode);
   return {
     fieldMode,
@@ -49,6 +51,19 @@ export const useUiStore = create((set) => {
         if (s.lastSync && now - new Date(s.lastSync) < SYNC_THROTTLE_MS) return s;
         write(SYNC_KEY, now.toISOString());
         return { lastSync: now.toISOString() };
+      }),
+
+    sidebarOpen,
+    setSidebarOpen: (open) =>
+      set(() => {
+        write(SIDEBAR_KEY, open);
+        return { sidebarOpen: open };
+      }),
+    toggleSidebar: () =>
+      set((s) => {
+        const next = !s.sidebarOpen;
+        write(SIDEBAR_KEY, next);
+        return { sidebarOpen: next };
       }),
 
     mobileNavOpen: false,

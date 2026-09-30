@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import { documentsApi } from '../../api/documents';
 import { apiErrorMessage } from '../../api/client';
 
@@ -32,6 +34,7 @@ async function loadPdf(docId) {
  *   highlights?: {bbox: number[], label?: string, tone?: 'primary'|'muted', page?: number}[] }} props
  */
 export default function PdfViewer({ docId, page, onPageChange, highlights = [] }) {
+  const { t } = useTranslation();
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const [numPages, setNumPages] = useState(null);
@@ -66,7 +69,7 @@ export default function PdfViewer({ docId, page, onPageChange, highlights = [] }
         if (!cancelled) setScale(s);
       } catch (err) {
         if (!cancelled && err?.name !== 'RenderingCancelledException') {
-          setError(apiErrorMessage(err, err?.message || 'Could not render the PDF.'));
+          setError(apiErrorMessage(err, err?.message || i18n.t('docs.pdf.render_error')));
         }
       } finally {
         if (!cancelled) setRendering(false);
@@ -89,19 +92,19 @@ export default function PdfViewer({ docId, page, onPageChange, highlights = [] }
             onClick={() => onPageChange?.(page - 1)}
             disabled={page <= 1}
             className="p-1 rounded hover:bg-royal-100 disabled:opacity-40"
-            aria-label="Previous page"
+            aria-label={t('docs.pdf.prev')}
           >
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           <span className="tabular-nums">
-            Page {page} / {numPages ?? '…'}
+            {t('docs.pdf.page_of', { page, total: numPages ?? '…' })}
           </span>
           <button
             type="button"
             onClick={() => onPageChange?.(page + 1)}
             disabled={numPages != null && page >= numPages}
             className="p-1 rounded hover:bg-royal-100 disabled:opacity-40"
-            aria-label="Next page"
+            aria-label={t('docs.pdf.next')}
           >
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
@@ -111,7 +114,7 @@ export default function PdfViewer({ docId, page, onPageChange, highlights = [] }
             type="button"
             onClick={() => setZoom((z) => Math.max(0.6, z - 0.2))}
             className="p-1 rounded hover:bg-royal-100"
-            aria-label="Zoom out"
+            aria-label={t('docs.pdf.zoom_out')}
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -120,7 +123,7 @@ export default function PdfViewer({ docId, page, onPageChange, highlights = [] }
             type="button"
             onClick={() => setZoom((z) => Math.min(3, z + 0.2))}
             className="p-1 rounded hover:bg-royal-100"
-            aria-label="Zoom in"
+            aria-label={t('docs.pdf.zoom_in')}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
@@ -133,7 +136,7 @@ export default function PdfViewer({ docId, page, onPageChange, highlights = [] }
           </p>
         )}
         <div className="relative inline-block shadow-sm bg-white">
-          <canvas ref={canvasRef} aria-label={`Document page ${page}`} role="img" />
+          <canvas ref={canvasRef} aria-label={t('docs.pdf.canvas', { page })} role="img" />
           {scale &&
             !rendering &&
             visible.map((h, i) => {
@@ -159,7 +162,7 @@ export default function PdfViewer({ docId, page, onPageChange, highlights = [] }
             })}
           {rendering && (
             <div className="absolute inset-0 flex items-center justify-center text-xs text-royal-700 animate-pulse min-h-[200px] min-w-[200px]">
-              Rendering…
+              {t('docs.pdf.rendering')}
             </div>
           )}
         </div>

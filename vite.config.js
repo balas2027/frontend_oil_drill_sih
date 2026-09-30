@@ -80,7 +80,10 @@ export default defineConfig({
       '@deck.gl/core',
       '@deck.gl/layers',
       '@deck.gl/react',
+      '@deck.gl/widgets',
       'd3-delaunay',
+      'i18next',
+      'react-i18next',
     ],
   },
   server: {
@@ -96,5 +99,6 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['./src/__tests__/setup.js'],
+    include: ['src/**/*.test.{js,jsx}'],
   },
 });

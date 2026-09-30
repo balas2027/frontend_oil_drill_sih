@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   X,
   Info,
@@ -8,17 +10,10 @@ import {
   GitCompareArrows,
   Check,
   Layers,
+  ExternalLink,
 } from 'lucide-react';
-import { EVENT_TYPE_COLORS, formatEventType } from './eventStyles';
+import { EVENT_TYPE_COLORS, formatEventType, formatStatusWord } from './eventStyles';
 
-const COMPONENT_LABELS = {
-  distance_decay: 'Distance',
-  formation_overlap: 'Formation overlap',
-  trajectory_similarity: 'Trajectory',
-  mud_system_match: 'Mud system',
-  casing_similarity: 'Casing program',
-  recency: 'Recency',
-};
 
 function Stat({ label, value }) {
   return (
@@ -38,6 +33,7 @@ function SectionTitle({ icon: Icon, children }) {
 }
 
 function SeverityChip({ value }) {
+  const { t } = useTranslation();
   const cls =
     value >= 4
       ? 'bg-red-50 text-red-700 border-red-200'
@@ -46,7 +42,7 @@ function SeverityChip({ value }) {
         : 'bg-emerald-50 text-emerald-700 border-emerald-200';
   return (
     <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold tabular-nums ${cls}`}>
-      Sev {value}/5
+      {t('severity.short', { value })}
     </span>
   );
 }
@@ -60,13 +56,14 @@ export default function WellDrawer({
   correlationFull,
   onToggleCorrelation,
 }) {
+  const { t } = useTranslation();
   const { well } = result;
   const fmt = (v, unit = '') => (v == null ? '—' : `${v}${unit}`);
 
   return (
     <aside
       className="w-80 bg-white rounded-xl border border-line shadow-sm overflow-y-auto shrink-0"
-      aria-label={`Details for ${well.name}`}
+      aria-label={t('map.drawer.details_for', { name: well.name })}
     >
       <div className="p-4 border-b border-line flex items-start justify-between bg-royal-50 sticky top-0 z-10">
         <div>
@@ -78,7 +75,7 @@ export default function WellDrawer({
         <button
           onClick={onClose}
           className="p-1 hover:bg-royal-100 rounded"
-          aria-label="Close details"
+          aria-label={t('map.drawer.close')}
         >
           <X className="w-4 h-4 text-ink-600" />
         </button>
@@ -86,10 +83,13 @@ export default function WellDrawer({
 
       <div className="p-4 space-y-4">
         <div className="grid grid-cols-2 gap-2">
-          <Stat label="Distance" value={`${result.distance_km} km`} />
-          <Stat label="Similarity" value={`${Math.round(result.similarity * 100)}%`} />
-          <Stat label="Status" value={<span className="capitalize">{well.status}</span>} />
-          <Stat label="Total depth" value={`${fmt(well.total_depth_md)} m MD`} />
+          <Stat label={t('map.drawer.distance')} value={`${result.distance_km} ${t('units.km')}`} />
+          <Stat label={t('map.drawer.similarity')} value={`${Math.round(result.similarity * 100)}%`} />
+          <Stat
+            label={t('map.drawer.status')}
+            value={<span className="capitalize">{formatStatusWord(well.status)}</span>}
+          />
+          <Stat label={t('map.drawer.total_depth')} value={`${fmt(well.total_depth_md)} ${t('units.m_md')}`} />
         </div>
 
         <div className="flex gap-2">
@@ -97,13 +97,13 @@ export default function WellDrawer({
             onClick={onMakeActive}
             className="flex-1 flex items-center justify-center gap-1 bg-royal-700 hover:bg-royal-900 text-white text-[11px] font-medium py-1.5 rounded-md"
           >
-            <Star className="w-3.5 h-3.5" aria-hidden="true" /> Set as active
+            <Star className="w-3.5 h-3.5" aria-hidden="true" /> {t('map.drawer.set_active')}
           </button>
           <button
             onClick={onToggleCorrelation}
             disabled={!inCorrelation && correlationFull}
             title={
-              !inCorrelation && correlationFull ? 'Correlation holds up to 5 wells' : undefined
+              !inCorrelation && correlationFull ? t('map.drawer.correlation_full') : undefined
             }
             className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-medium py-1.5 rounded-md border disabled:opacity-40 ${
               inCorrelation
@@ -116,13 +116,19 @@ export default function WellDrawer({
             ) : (
               <GitCompareArrows className="w-3.5 h-3.5" aria-hidden="true" />
             )}
-            {inCorrelation ? 'In correlation' : 'Add to correlation'}
+            {inCorrelation ? t('map.drawer.in_correlation') : t('map.drawer.add_correlation')}
           </button>
         </div>
+        <Link
+          to={`/wells/${well.well_id}`}
+          className="flex items-center justify-center gap-1 text-[11px] font-medium text-royal-600 hover:underline"
+        >
+          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" /> {t('map.drawer.open_well')}
+        </Link>
 
         {result.why_similar.length > 0 && (
           <section>
-            <SectionTitle icon={Info}>Why similar</SectionTitle>
+            <SectionTitle icon={Info}>{t('map.drawer.why_similar')}</SectionTitle>
             <ul className="space-y-1">
               {result.why_similar.map((reason) => (
                 <li
@@ -141,7 +147,7 @@ export default function WellDrawer({
         )}
 
         <section>
-          <SectionTitle icon={Layers}>Score breakdown</SectionTitle>
+          <SectionTitle icon={Layers}>{t('map.drawer.score_breakdown')}</SectionTitle>
           <ul className="space-y-1.5">
             {Object.entries(result.components).map(([key, value]) => {
               const weight = weights?.[key] ?? 0;
@@ -149,7 +155,7 @@ export default function WellDrawer({
                 <li key={key} className="text-[11px]">
                   <div className="flex justify-between text-ink-600">
                     <span>
-                      {COMPONENT_LABELS[key] || key}{' '}
+                      {t(`map.drawer.components.${key}`, { defaultValue: key })}{' '}
                       <span className="text-[10px]">(w {weight})</span>
                     </span>
                     <span className="tabular-nums font-medium text-royal-900">
@@ -171,12 +177,12 @@ export default function WellDrawer({
         <section className="text-xs">
           <dl className="divide-y divide-line/60">
             {[
-              ['Trajectory', well.trajectory_type],
-              ['Mud system', well.mud_system],
-              ['Target formation', well.formation_target],
-              ['Reservoir', well.reservoir],
-              ['Spud date', well.spud_date?.slice(0, 10)],
-              ['TD date', well.td_date?.slice(0, 10)],
+              [t('map.drawer.trajectory'), formatStatusWord(well.trajectory_type)],
+              [t('map.drawer.mud_system'), well.mud_system],
+              [t('map.drawer.target'), well.formation_target],
+              [t('map.drawer.reservoir'), well.reservoir],
+              [t('map.drawer.spud'), well.spud_date?.slice(0, 10)],
+              [t('map.drawer.td_date'), well.td_date?.slice(0, 10)],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between py-1.5">
                 <dt className="text-ink-600">{k}</dt>
@@ -188,7 +194,9 @@ export default function WellDrawer({
 
         {result.total_events > 0 && (
           <section>
-            <SectionTitle icon={AlertTriangle}>Events ({result.total_events})</SectionTitle>
+            <SectionTitle icon={AlertTriangle}>
+              {t('map.drawer.events', { n: result.total_events })}
+            </SectionTitle>
             <ul className="space-y-1 mb-3">
               {Object.entries(result.event_counts)
                 .sort((a, b) => b[1] - a[1])
@@ -210,7 +218,7 @@ export default function WellDrawer({
                 ))}
             </ul>
 
-            <h5 className="text-[10px] font-semibold text-ink-600 mb-1">Most severe</h5>
+            <h5 className="text-[10px] font-semibold text-ink-600 mb-1">{t('map.drawer.most_severe')}</h5>
             <ul className="space-y-2">
               {result.top_events.map((ev) => (
                 <li
@@ -225,11 +233,11 @@ export default function WellDrawer({
                     <SeverityChip value={ev.severity} />
                   </div>
                   <p className="text-ink-600 mt-0.5 tabular-nums">
-                    {ev.depth_from_md}–{ev.depth_to_md} m MD • {ev.formation || '—'}
+                    {ev.depth_from_md}–{ev.depth_to_md} {t('units.m_md')} • {ev.formation || '—'}
                   </p>
                   {ev.mitigation && (
                     <p className="mt-1 text-ink-900">
-                      <span className="text-ink-600">Mitigation:</span> {ev.mitigation}
+                      <span className="text-ink-600">{t('map.drawer.mitigation')}:</span> {ev.mitigation}
                     </p>
                   )}
                 </li>

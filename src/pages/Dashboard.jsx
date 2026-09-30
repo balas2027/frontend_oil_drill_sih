@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import {
   Activity,
   AlertTriangle,
@@ -138,7 +139,7 @@ export default function Dashboard() {
       })
       .catch((err) => {
         if (err?.response?.status === 404 && wellId) setWellId('');
-        else setError(apiErrorMessage(err, 'Could not load the dashboard.'));
+        else setError(apiErrorMessage(err, i18n.t('dashboard.load_error')));
       });
   }, [wellId, radiusKm]);
 
@@ -166,7 +167,7 @@ export default function Dashboard() {
     try {
       await downloadBriefPdf(data.active_well.well_id, radiusKm);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not create the brief.'));
+      setError(apiErrorMessage(err, t('risk.page.brief_failed')));
     } finally {
       setBriefBusy(false);
     }
@@ -316,7 +317,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => navigate('/alerts')}
+                  onClick={() => navigate('/monitor')}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-royal-700 hover:bg-royal-900 text-white text-xs font-medium"
                 >
                   {t('dashboard.active.open_risk')}{' '}

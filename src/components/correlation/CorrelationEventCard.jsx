@@ -1,30 +1,35 @@
 import { Link } from 'react-router-dom';
 import { X, FileText, Database } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { EVENT_TYPE_COLORS, formatEventType } from '../map/eventStyles';
 
 /** Selected event with its evidence link (Section 9: every claim has "View source"). */
 export default function CorrelationEventCard({ event, align, onClose }) {
+  const { t } = useTranslation();
   const e = event;
   const rows = [
-    ['Well', `${e.well_id}${e.well_name ? ` · ${e.well_name}` : ''}`],
-    ['Depth', `${e.depth_from_md}–${e.depth_to_md} m MD`],
+    [t('explorer.cols.well'), `${e.well_id}${e.well_name ? ` · ${e.well_name}` : ''}`],
+    [t('explorer.drilling.depth'), `${e.depth_from_md}–${e.depth_to_md} m MD`],
     [
-      'On chart axis',
+      t('corr.card.axis'),
       `${Math.round(e.from)}–${Math.round(e.to)} m${align === 'tvd' ? ' TVD' : ''}`,
     ],
-    ['Formation', e.formation || '—'],
-    ['Severity', `${e.severity}/5`],
-    ['Mud weight', e.mud_weight != null ? `${e.mud_weight} sg` : '—'],
-    ['Losses', e.volume_lost_bbl != null ? `${e.volume_lost_bbl} bbl` : null],
+    [t('docs.fields.formation'), e.formation || '—'],
+    [t('docs.fields.severity'), `${e.severity}/5`],
+    [t('docs.fields.mud_weight'), e.mud_weight != null ? `${e.mud_weight} sg` : '—'],
+    [t('corr.card.losses'), e.volume_lost_bbl != null ? `${e.volume_lost_bbl} bbl` : null],
     ['NPT', e.npt_hours != null ? `${e.npt_hours} h` : null],
-    ['Record status', e.status || '—'],
+    [
+      t('corr.card.record_status'),
+      e.status ? t(`explorer.review_status.${e.status}`, { defaultValue: e.status }) : '—',
+    ],
   ].filter(([, v]) => v != null);
 
   return (
     <section
       className="bg-white rounded-xl border border-line border-l-4 shadow-sm text-xs"
       style={{ borderLeftColor: EVENT_TYPE_COLORS[e.type] }}
-      aria-label="Selected event"
+      aria-label={t('corr.card.aria')}
     >
       <header className="px-3 py-2 border-b border-line flex items-start justify-between gap-2">
         <h3 className="font-bold text-royal-900 capitalize">{formatEventType(e.type)}</h3>
@@ -32,7 +37,7 @@ export default function CorrelationEventCard({ event, align, onClose }) {
           type="button"
           onClick={onClose}
           className="p-0.5 rounded hover:bg-royal-100"
-          aria-label="Close event"
+          aria-label={t('corr.card.close')}
         >
           <X className="w-3.5 h-3.5 text-ink-600" />
         </button>
@@ -49,7 +54,7 @@ export default function CorrelationEventCard({ event, align, onClose }) {
         {e.description && <p className="text-ink-900">{e.description}</p>}
         {e.mitigation && (
           <p>
-            <span className="text-ink-600">Mitigation:</span>{' '}
+            <span className="text-ink-600">{t('docs.fields.mitigation')}:</span>{' '}
             <b className="text-royal-900">{e.mitigation}</b>
             {e.outcome && <span className="text-ink-600"> · {e.outcome}</span>}
           </p>
@@ -59,13 +64,13 @@ export default function CorrelationEventCard({ event, align, onClose }) {
             to={`/documents/${e.source.doc_id}?page=${e.source.page || 1}`}
             className="inline-flex items-center gap-1 text-royal-600 hover:underline font-medium"
           >
-            <FileText className="w-3.5 h-3.5" aria-hidden="true" /> View source report (page{' '}
-            {e.source.page || 1})
+            <FileText className="w-3.5 h-3.5" aria-hidden="true" />{' '}
+            {t('explorer.events.view_source', { page: e.source.page || 1 })}
           </Link>
         ) : (
           <p className="flex gap-1.5 text-[11px] text-ink-600">
             <Database className="w-3.5 h-3.5 shrink-0 text-royal-700" aria-hidden="true" />
-            Event record only - no source report linked yet.
+            {t('corr.card.no_source')}
           </p>
         )}
       </div>

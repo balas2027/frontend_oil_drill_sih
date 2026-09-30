@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Activity } from 'lucide-react';
 import { wellsApi, eventsApi } from '../../api/wells';
 import { apiErrorMessage } from '../../api/client';
@@ -9,21 +10,18 @@ const TARGET_POINTS = 700;
 
 /** Depth tracks (depth increases downwards, as on a mud log). */
 const TRACKS = [
-  { keys: ['rop'], label: 'ROP', unit: 'm/h', colors: ['#1D4FB8'] },
-  { keys: ['wob'], label: 'WOB', unit: 't', colors: ['#475569'] },
-  { keys: ['torque'], label: 'Torque', unit: 'kN·m', colors: ['#7C3AED'] },
-  { keys: ['spp'], label: 'SPP', unit: 'psi', colors: ['#0A2A66'] },
-  {
-    keys: ['flow_in', 'flow_out'],
-    label: 'Flow in / out',
-    unit: 'gpm',
-    colors: ['#1E8E5A', '#E8871E'],
-  },
-  { keys: ['pit_volume'], label: 'Pit volume', unit: 'bbl', colors: ['#C62D3B'] },
-  { keys: ['gas_units'], label: 'Gas', unit: 'units', colors: ['#C9A227'] },
+  { id: 'rop', keys: ['rop'], unit: 'm/h', colors: ['#1D4FB8'] },
+  { id: 'wob', keys: ['wob'], unit: 't', colors: ['#475569'] },
+  { id: 'torque', keys: ['torque'], unit: 'kN·m', colors: ['#7C3AED'] },
+  { id: 'spp', keys: ['spp'], unit: 'psi', colors: ['#0A2A66'] },
+  { id: 'flow', keys: ['flow_in', 'flow_out'], unit: 'gpm', colors: ['#1E8E5A', '#E8871E'] },
+  { id: 'pit_volume', keys: ['pit_volume'], unit: 'bbl', colors: ['#C62D3B'] },
+  { id: 'gas_units', keys: ['gas_units'], unit: 'units', colors: ['#C9A227'] },
 ];
 
 function Track({ track, records, maxDepth, events, cursorDepth }) {
+  const { t } = useTranslation();
+  const label = t(`params.${track.id}`);
   const values = records.flatMap((r) => track.keys.map((k) => r[k]).filter((v) => v != null));
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -34,7 +32,7 @@ function Track({ track, records, maxDepth, events, cursorDepth }) {
   return (
     <div className="flex-1 min-w-[88px]">
       <div className="text-[10px] font-semibold text-royal-900 text-center truncate">
-        {track.label}
+        {label}
       </div>
       <div className="text-[9px] text-ink-600 text-center tabular-nums">
         {min.toFixed(0)}–{max.toFixed(0)} {track.unit}
@@ -44,7 +42,7 @@ function Track({ track, records, maxDepth, events, cursorDepth }) {
         preserveAspectRatio="none"
         className="w-full border border-line bg-white rounded-sm"
         style={{ height: CHART_HEIGHT }}
-        aria-label={`${track.label} versus depth`}
+        aria-label={t('explorer.drilling.versus_depth', { label })}
         role="img"
       >
         {events.map((e) => (
@@ -88,6 +86,7 @@ function Track({ track, records, maxDepth, events, cursorDepth }) {
 }
 
 export default function DrillingTab({ wellIds }) {
+  const { t } = useTranslation();
   const [wellId, setWellId] = useState(wellIds?.[0] || '');
   const [records, setRecords] = useState([]);
   const [total, setTotal] = useState(0);
@@ -120,7 +119,7 @@ export default function DrillingTab({ wellIds }) {
         setTotal(ts.data.total);
         setEvents(ev.data.events);
       } catch (err) {
-        if (!cancelled) setError(apiErrorMessage(err, 'Could not load drilling data.'));
+        if (!cancelled) setError(apiErrorMessage(err, t('explorer.drilling.load_error')));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -154,8 +153,8 @@ export default function DrillingTab({ wellIds }) {
     return (
       <div className="p-8 text-center text-xs text-ink-600">
         <Activity className="w-8 h-8 mx-auto text-ink-600/30 mb-2" aria-hidden="true" />
-        No drilling time-series loaded. Run{' '}
-        <code className="font-mono">python scripts/seed_drilling_ts.py</code> in the backend.
+        {t('explorer.drilling.none')}{' '}
+        <code className="font-mono">python scripts/seed_drilling_ts.py</code>
       </div>
     );
   }
@@ -166,7 +165,7 @@ export default function DrillingTab({ wellIds }) {
     <div className="p-3 space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-xs flex items-center gap-2">
-          <span className="text-ink-600">Well</span>
+          <span className="text-ink-600">{t('explorer.cols.well')}</span>
           <select
             value={wellId}
             onChange={(e) => setWellId(e.target.value)}
@@ -181,11 +180,15 @@ export default function DrillingTab({ wellIds }) {
         </label>
         <span className="text-[11px] text-ink-600 tabular-nums">
           {loading
-            ? 'Loading…'
-            : `${total.toLocaleString()} records · showing ${records.length} (downsampled) · ${events.length} events shaded`}
+            ? t('common.loading')
+            : t('explorer.drilling.status', {
+                total: total.toLocaleString(),
+                shown: records.length,
+                events: events.length,
+              })}
         </span>
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-          Synthetic demo data
+          {t('app.synthetic')}
         </span>
       </div>
       {error && (
@@ -216,10 +219,10 @@ export default function DrillingTab({ wellIds }) {
                   ))}
                 </div>
               </div>
-              {TRACKS.map((t) => (
+              {TRACKS.map((tr) => (
                 <Track
-                  key={t.label}
-                  track={t}
+                  key={tr.id}
+                  track={tr}
                   records={records}
                   maxDepth={maxDepth}
                   events={events}
@@ -232,25 +235,25 @@ export default function DrillingTab({ wellIds }) {
           <aside className="w-56 shrink-0 text-xs space-y-3" aria-live="polite">
             <div className="bg-royal-50 border border-royal-100 rounded-lg p-2.5">
               <h4 className="text-[10px] uppercase font-bold tracking-wider text-royal-700 mb-1">
-                Readout
+                {t('explorer.drilling.readout')}
               </h4>
               {cursorRecord ? (
                 <dl className="grid grid-cols-2 gap-y-0.5 tabular-nums">
-                  <dt className="text-ink-600">Depth</dt>
+                  <dt className="text-ink-600">{t('explorer.drilling.depth')}</dt>
                   <dd className="font-semibold text-royal-900">{cursorRecord.depth_md} m</dd>
-                  <dt className="text-ink-600">Time</dt>
+                  <dt className="text-ink-600">{t('explorer.drilling.time')}</dt>
                   <dd>{cursorRecord.ts?.slice(0, 16).replace('T', ' ')}</dd>
-                  {TRACKS.flatMap((t) => t.keys).map((k) => (
+                  {TRACKS.flatMap((tr) => tr.keys).map((k) => (
                     <div key={k} className="contents">
                       <dt className="text-ink-600">{k.replace(/_/g, ' ')}</dt>
                       <dd>{cursorRecord[k]}</dd>
                     </div>
                   ))}
-                  <dt className="text-ink-600">MW in</dt>
+                  <dt className="text-ink-600">{t('explorer.drilling.mw_in')}</dt>
                   <dd>{cursorRecord.mud_weight_in} sg</dd>
                 </dl>
               ) : (
-                <p className="text-ink-600">Hover the tracks to read values at a depth.</p>
+                <p className="text-ink-600">{t('explorer.drilling.hover')}</p>
               )}
               {cursorEvents.map((e) => (
                 <p
@@ -264,22 +267,22 @@ export default function DrillingTab({ wellIds }) {
             </div>
             <div>
               <h4 className="text-[10px] uppercase font-bold tracking-wider text-royal-700 mb-1">
-                Event bands
+                {t('explorer.drilling.event_bands')}
               </h4>
               <ul className="space-y-0.5">
-                {[...new Set(events.map((e) => e.type))].map((t) => (
-                  <li key={t} className="flex items-center gap-1.5 capitalize">
+                {[...new Set(events.map((e) => e.type))].map((et) => (
+                  <li key={et} className="flex items-center gap-1.5 capitalize">
                     <span
                       className="w-3 h-2 rounded-sm"
-                      style={{ background: EVENT_TYPE_COLORS[t], opacity: 0.5 }}
+                      style={{ background: EVENT_TYPE_COLORS[et], opacity: 0.5 }}
                       aria-hidden="true"
                     />
-                    {formatEventType(t)}
+                    {formatEventType(et)}
                   </li>
                 ))}
               </ul>
               <p className="text-[10px] text-ink-600 mt-1.5">
-                Flow track: green = in, orange = out.
+                {t('explorer.drilling.flow_note')}
               </p>
             </div>
           </aside>

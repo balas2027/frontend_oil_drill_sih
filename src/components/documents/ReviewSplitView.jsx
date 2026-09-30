@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, AlertTriangle, Info, Link2, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { reviewApi } from '../../api/documents';
 import { apiErrorMessage } from '../../api/client';
 import { useAuthStore, canReview } from '../../store/authStore';
@@ -44,6 +45,7 @@ function Field({ label, children, hint }) {
 }
 
 export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const reviewer = canReview(user);
   const [item, setItem] = useState(null);
@@ -72,11 +74,11 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
         setPage(it.evidence?.page || 1);
         setReason('');
       })
-      .catch((err) => !cancelled && setError(apiErrorMessage(err, 'Could not load the item.')));
+      .catch((err) => !cancelled && setError(apiErrorMessage(err, t('docs.split.load_error'))));
     return () => {
       cancelled = true;
     };
-  }, [itemId]);
+  }, [itemId, t]);
 
   const edits = useMemo(() => (form && initial ? formEdits(initial, form) : {}), [form, initial]);
   const highlights = useMemo(() => {
@@ -92,7 +94,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
 
   if (error) return <p className="p-4 text-xs text-red-700">{error}</p>;
   if (!item || !form)
-    return <p className="p-4 text-xs text-ink-600 animate-pulse">Loading item…</p>;
+    return <p className="p-4 text-xs text-ink-600 animate-pulse">{t('docs.split.loading')}</p>;
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const resolved = item.status === 'approved' || item.status === 'rejected';
@@ -109,7 +111,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
       const res = await reviewApi.approve(item._id, body);
       onResolved?.(item._id, 'approved', res.data);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Approval failed.'));
+      setError(apiErrorMessage(err, t('docs.split.approve_failed')));
     } finally {
       setBusy(false);
     }
@@ -122,7 +124,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
       await reviewApi.reject(item._id, reason || undefined);
       onResolved?.(item._id, 'rejected');
     } catch (err) {
-      setError(apiErrorMessage(err, 'Rejection failed.'));
+      setError(apiErrorMessage(err, t('docs.split.reject_failed')));
     } finally {
       setBusy(false);
     }
@@ -131,7 +133,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
   return (
     <div className="grid lg:grid-cols-2 gap-0 h-full min-h-[560px]">
       <div className="border-r border-line min-h-[420px] flex flex-col">
-        <Suspense fallback={<p className="p-4 text-xs text-ink-600">Loading viewer…</p>}>
+        <Suspense fallback={<p className="p-4 text-xs text-ink-600">{t('docs.split.loading_viewer')}</p>}>
           <PdfViewer
             docId={item.doc_id}
             page={page}
@@ -146,7 +148,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
           <span className="text-sm font-bold text-royal-900 capitalize">
             {item.kind === 'event'
               ? formatEventType(item.values.type)
-              : `Formation top · ${item.values.formation}`}
+              : `${t('docs.split.formation_top')} · ${item.values.formation}`}
           </span>
           <ItemStatusChip status={item.status} />
           <ConfidenceBadge value={item.confidence} />
@@ -160,7 +162,8 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
           >
             {item.document?.filename}
           </Link>
-          · page {item.evidence?.page} · {item.page_source === 'ocr' ? 'OCR' : 'text layer'} ·{' '}
+          · {t('docs.split.page', { page: item.evidence?.page })} ·{' '}
+          {item.page_source === 'ocr' ? 'OCR' : t('docs.split.text_layer')} ·{' '}
           {item.source_kind}
         </p>
 
@@ -176,17 +179,19 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
           <div className="flex gap-2 p-2.5 rounded-lg border border-royal-100 bg-royal-50">
             <Link2 className="w-4 h-4 text-royal-700 shrink-0 mt-0.5" aria-hidden="true" />
             <p>
-              Matches an event already on record for {item.duplicate.well_id}:{' '}
-              <b className="capitalize">{formatEventType(item.duplicate.type)}</b> at{' '}
-              {item.duplicate.depth_from_md}–{item.duplicate.depth_to_md} m (
-              {item.duplicate.formation}). Approving attaches this page as its source evidence
-              instead of creating a duplicate.
+              {t('docs.split.duplicate', {
+                well: item.duplicate.well_id,
+                type: formatEventType(item.duplicate.type),
+                from: item.duplicate.depth_from_md,
+                to: item.duplicate.depth_to_md,
+                formation: item.duplicate.formation,
+              })}
             </p>
           </div>
         )}
 
         {issues.length > 0 && (
-          <ul className="space-y-1" aria-label="Validation results">
+          <ul className="space-y-1" aria-label={t('docs.split.validation')}>
             {issues.map((iss) => {
               const s = SEVERITY_ICON[iss.severity] || SEVERITY_ICON.info;
               const Icon = s.icon;
@@ -204,16 +209,16 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
         )}
 
         <fieldset disabled={locked || resolved} className="grid grid-cols-2 gap-2">
-          <legend className="sr-only">Extracted fields</legend>
+          <legend className="sr-only">{t('docs.split.fields')}</legend>
           {(!item.well_id || issues.some((i) => i.code === 'well_unmatched')) && (
             <div className="col-span-2">
-              <Field label="Well">
+              <Field label={t('explorer.cols.well')}>
                 <select
                   className={inputCls}
                   value={wellId}
                   onChange={(e) => setWellId(e.target.value)}
                 >
-                  <option value="">Select the well…</option>
+                  <option value="">{t('docs.split.select_well')}</option>
                   {wellIds.map((w) => (
                     <option key={w} value={w}>
                       {w}
@@ -225,20 +230,20 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
           )}
           {item.kind === 'event' ? (
             <>
-              <Field label="Type">
+              <Field label={t('explorer.cols.type')}>
                 <select
                   className={`${inputCls} capitalize`}
                   value={form.type}
                   onChange={set('type')}
                 >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {formatEventType(t)}
+                  {EVENT_TYPES.map((et) => (
+                    <option key={et} value={et}>
+                      {formatEventType(et)}
                     </option>
                   ))}
                 </select>
               </Field>
-              <Field label="Severity" hint="1-5">
+              <Field label={t('docs.fields.severity')} hint="1-5">
                 <input
                   type="number"
                   min={1}
@@ -248,7 +253,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                   onChange={set('severity')}
                 />
               </Field>
-              <Field label="Depth from" hint="m MD">
+              <Field label={t('docs.fields.depth_from')} hint="m MD">
                 <input
                   type="number"
                   min={0}
@@ -258,7 +263,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                   onChange={set('depth_from_md')}
                 />
               </Field>
-              <Field label="Depth to" hint="m MD">
+              <Field label={t('docs.fields.depth_to')} hint="m MD">
                 <input
                   type="number"
                   min={0}
@@ -268,10 +273,10 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                   onChange={set('depth_to_md')}
                 />
               </Field>
-              <Field label="Formation">
+              <Field label={t('docs.fields.formation')}>
                 <input className={inputCls} value={form.formation} onChange={set('formation')} />
               </Field>
-              <Field label="Mud weight" hint="sg">
+              <Field label={t('docs.fields.mud_weight')} hint="sg">
                 <input
                   type="number"
                   min={0}
@@ -281,7 +286,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                   onChange={set('mud_weight')}
                 />
               </Field>
-              <Field label="Volume lost" hint="bbl">
+              <Field label={t('docs.fields.volume_lost')} hint="bbl">
                 <input
                   type="number"
                   min={0}
@@ -291,7 +296,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                   onChange={set('volume_lost_bbl')}
                 />
               </Field>
-              <Field label="NPT" hint="hours">
+              <Field label="NPT" hint={t('docs.fields.hours')}>
                 <input
                   type="number"
                   min={0}
@@ -302,7 +307,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                 />
               </Field>
               <div className="col-span-2">
-                <Field label="Mitigation">
+                <Field label={t('docs.fields.mitigation')}>
                   <input
                     className={inputCls}
                     value={form.mitigation}
@@ -311,26 +316,28 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                 </Field>
               </div>
               <div className="col-span-2">
-                <Field label="Outcome">
+                <Field label={t('explorer.events.outcome')}>
                   <input className={inputCls} value={form.outcome} onChange={set('outcome')} />
                 </Field>
               </div>
               <p className="col-span-2 text-[10px] text-ink-600 tabular-nums">
                 TVD {item.values.depth_from_tvd ?? '—'}–{item.values.depth_to_tvd ?? '—'} m
-                {item.values.tvd_estimated ? ' (estimated - no survey)' : ' (from surveys)'}
+                {item.values.tvd_estimated
+                  ? ` (${t('docs.split.tvd_estimated')})`
+                  : ` (${t('docs.split.tvd_surveys')})`}
                 {item.values.formation_source === 'inferred_from_tops' &&
-                  ' · formation inferred from tops'}
+                  ` · ${t('docs.split.formation_inferred')}`}
               </p>
             </>
           ) : (
             <>
-              <Field label="Formation">
+              <Field label={t('docs.fields.formation')}>
                 <input className={inputCls} value={form.formation} onChange={set('formation')} />
               </Field>
-              <Field label="Lithology">
+              <Field label={t('docs.fields.lithology')}>
                 <input className={inputCls} value={form.lithology} onChange={set('lithology')} />
               </Field>
-              <Field label="Top" hint="m MD">
+              <Field label={t('docs.fields.top')} hint="m MD">
                 <input
                   type="number"
                   min={0}
@@ -339,7 +346,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                   onChange={set('top_md')}
                 />
               </Field>
-              <Field label="Base" hint="m MD">
+              <Field label={t('docs.fields.base')} hint="m MD">
                 <input
                   type="number"
                   min={0}
@@ -358,8 +365,10 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
 
         {resolved ? (
           <p className="text-ink-600">
-            {item.status === 'approved' ? 'Approved' : 'Rejected'} by {item.reviewed_by}
-            {item.reviewed_at && ` on ${item.reviewed_at.slice(0, 10)}`}.
+            {t(item.status === 'approved' ? 'docs.split.approved_by' : 'docs.split.rejected_by', {
+              who: item.reviewed_by,
+            })}
+            {item.reviewed_at && ` · ${item.reviewed_at.slice(0, 10)}`}
           </p>
         ) : reviewer ? (
           <div className="space-y-2 pt-1 border-t border-line">
@@ -372,14 +381,14 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
               >
                 <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                 {Object.keys(edits).length
-                  ? `Approve with ${Object.keys(edits).length} edit(s)`
-                  : 'Approve'}
+                  ? t('docs.split.approve_edits', { n: Object.keys(edits).length })
+                  : t('docs.split.approve')}
               </button>
               <input
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Reason (optional)"
-                aria-label="Rejection reason"
+                placeholder={t('docs.split.reason')}
+                aria-label={t('docs.split.reason_aria')}
                 className="flex-1 min-w-[120px] text-xs border border-line rounded-md px-2 py-1.5"
               />
               <button
@@ -388,16 +397,16 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
                 disabled={busy}
                 className="flex items-center gap-1 border border-red-600 text-red-700 hover:bg-red-50 text-xs font-medium px-3 py-1.5 rounded-md disabled:opacity-50"
               >
-                <XCircle className="w-4 h-4" aria-hidden="true" /> Reject
+                <XCircle className="w-4 h-4" aria-hidden="true" /> {t('explorer.events.reject')}
               </button>
             </div>
             <p className="text-[10px] text-ink-600">
-              Edits are saved to the gold set used to evaluate and tune extraction.
+              {t('docs.split.gold_note')}
             </p>
           </div>
         ) : (
           <p className="text-ink-600 border-t border-line pt-2">
-            Only reviewers and admins can approve or reject items.
+            {t('docs.split.reviewers_only')}
           </p>
         )}
       </div>

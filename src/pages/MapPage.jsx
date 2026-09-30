@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as turf from '@turf/turf';
 import { Radar, Crosshair, GitCompareArrows } from 'lucide-react';
 import { useMapStore, MAX_CORRELATION_WELLS } from '../store/mapStore';
@@ -10,30 +11,31 @@ import NearbyFilters from '../components/map/NearbyFilters';
 import NearbyList from '../components/map/NearbyList';
 import WellDrawer from '../components/map/WellDrawer';
 import { MAP_MODES } from '../components/map/mapModes';
-import { EVENT_DENSITY_STOPS, formatEventType } from '../components/map/eventStyles';
+import { EVENT_DENSITY_STOPS, formatEventType, formatStatusWord } from '../components/map/eventStyles';
 
 // deck.gl is only loaded when the Subsurface 3D mode is opened
 const Subsurface3D = lazy(() => import('../components/map/Subsurface3D'));
 
 const RADIUS_DEBOUNCE_MS = 300;
 
-function MapLegend({ mapMode, eventType }) {
+function MapLegend({ mapMode, eventType, layers }) {
+  const { t } = useTranslation();
   const mode = MAP_MODES[mapMode];
   return (
     <div className="absolute bottom-8 left-3 z-10 bg-white/95 backdrop-blur rounded-lg border border-line shadow-sm p-2.5 text-[10px] text-ink-900 space-y-1.5 max-w-[220px]">
       <div className="flex items-center gap-2">
         <span className="nwis-active-marker !w-4 !h-4 !border" aria-hidden="true" />
-        Active well
+        {t('map.legend.active')}
       </div>
       <div className="flex items-center gap-2">
         <span className="inline-flex items-end gap-0.5" aria-hidden="true">
           <span className="w-2 h-2 rounded-full bg-royal-700" />
           <span className="w-3.5 h-3.5 rounded-full bg-royal-700" />
         </span>
-        Offset well (size = similarity)
+        {t('map.legend.offset')}
       </div>
       <div>
-        <span className="block mb-0.5">Ring = recorded events</span>
+        <span className="block mb-0.5">{t('map.legend.ring')}</span>
         <div className="flex gap-2 flex-wrap">
           {EVENT_DENSITY_STOPS.map((s) => (
             <span key={s.label} className="flex items-center gap-1">
@@ -52,31 +54,80 @@ function MapLegend({ mapMode, eventType }) {
           className="w-2.5 h-2.5 rounded-full bg-slate-400 border border-white"
           aria-hidden="true"
         />
-        Other wells (click to make active)
+        {t('map.legend.other')}
       </div>
       <div className="flex items-center gap-2">
         <span className="w-4 h-0.5 bg-royal-600 rounded" aria-hidden="true" />
-        Well path (plan view, from surveys)
+        {t('map.legend.path')}
       </div>
+      {layers.arcs && (
+        <div className="flex items-center gap-2">
+          <span className="w-4 h-1 bg-gold-500 rounded" aria-hidden="true" />
+          {t('map.legend.arcs')}
+        </div>
+      )}
+      {layers.rings && (
+        <div className="flex items-center gap-2">
+          <span className="w-4 border-t border-dashed border-royal-900" aria-hidden="true" />
+          {t('map.legend.rings')}
+        </div>
+      )}
+      {layers.boundaries && (
+        <div className="flex items-center gap-2">
+          <span className="w-4 border-t-2 border-dashed border-gold-500" aria-hidden="true" />
+          {t('map.legend.boundary')}
+        </div>
+      )}
+      {layers.clusters && layers.allWells && (
+        <div className="flex items-center gap-2">
+          <span
+            className="w-3.5 h-3.5 rounded-full bg-slate-500 text-white text-[7px] leading-[14px] text-center"
+            aria-hidden="true"
+          >
+            5
+          </span>
+          {t('map.legend.clusters')}
+        </div>
+      )}
+      {layers.hexbins && (
+        <div className="pt-1 border-t border-line">
+          <span className="block mb-0.5">{t('map.legend.hexbins')}</span>
+          <div
+            className="h-1.5 rounded-full"
+            style={{ background: 'linear-gradient(90deg,#FBF3D6,#E0A100,#E8871E,#C62D3B)' }}
+          />
+          <div className="flex justify-between text-ink-600">
+            <span>{t('map.legend.low')}</span>
+            <span>{t('map.legend.high')}</span>
+          </div>
+        </div>
+      )}
+      {layers.contours && (
+        <div className="flex items-center gap-2">
+          <span className="w-4 border-t border-[#7A5F0F]" aria-hidden="true" />
+          {t('map.legend.contours')}
+        </div>
+      )}
       {mode.overlay === 'eventHeat' && (
         <div className="pt-1 border-t border-line">
           <span className="block mb-0.5">
-            Event heatmap{eventType ? ` — ${formatEventType(eventType)}` : ' — all types'} (weighted
-            by severity)
+            {t('map.legend.heatmap', {
+              types: eventType ? formatEventType(eventType) : t('map.legend.all_types'),
+            })}
           </span>
           <div
             className="h-1.5 rounded-full"
             style={{ background: 'linear-gradient(90deg,#3B6FD8,#1E8E5A,#E0A100,#E8871E,#C62D3B)' }}
           />
           <div className="flex justify-between text-ink-600">
-            <span>Low</span>
-            <span>High</span>
+            <span>{t('map.legend.low')}</span>
+            <span>{t('map.legend.high')}</span>
           </div>
         </div>
       )}
       {mode.terrain && (
         <div className="pt-1 border-t border-line font-semibold text-[#7A5F0F]">
-          Vertical exaggeration {mode.terrain.exaggeration}× (floodplain terrain)
+          {t('map.legend.exaggeration', { x: mode.terrain.exaggeration })}
         </div>
       )}
     </div>
@@ -84,6 +135,7 @@ function MapLegend({ mapMode, eventType }) {
 }
 
 export default function MapPage() {
+  const { t } = useTranslation();
   const {
     activeWellId,
     activeWell,
@@ -143,7 +195,7 @@ export default function MapPage() {
         }
       } catch (err) {
         console.error('Failed to load wells:', err);
-        setLoadError('Could not load wells. Check that the API is running.');
+        setLoadError(t('map.load_error'));
       } finally {
         setLoading(false);
       }
@@ -182,18 +234,19 @@ export default function MapPage() {
       } catch (err) {
         if (seq !== requestSeq.current) return;
         console.error('Failed to fetch nearby wells:', err);
-        setNearbyError(err.response?.data?.detail?.toString() || 'Nearby-wells query failed.');
+        setNearbyError(err.response?.data?.detail?.toString() || t('map.nearby_error'));
         setNearbyResult({ wells: [], warnings: [], latencyMs: null });
       } finally {
         if (seq === requestSeq.current) setNearbyLoading(false);
       }
     }, RADIUS_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [activeWellId, radiusKm, filters, setNearbyError, setNearbyLoading, setNearbyResult]);
+  }, [activeWellId, radiusKm, filters, setNearbyError, setNearbyLoading, setNearbyResult, t]);
 
-  // Heatmap data only while the heatmap mode is on
+  // Event locations: needed by the heatmap mode and the hex-bin density layer
+  const needEventsGeo = MAP_MODES[mapMode]?.overlay === 'eventHeat' || layers.hexbins;
   useEffect(() => {
-    if (MAP_MODES[mapMode]?.overlay !== 'eventHeat') return;
+    if (!needEventsGeo) return;
     let cancelled = false;
     eventsApi
       .getEventsGeo({ type: filters.eventType, formation: filters.formation })
@@ -202,7 +255,7 @@ export default function MapPage() {
     return () => {
       cancelled = true;
     };
-  }, [mapMode, filters.eventType, filters.formation]);
+  }, [needEventsGeo, filters.eventType, filters.formation]);
 
   // Plan-view trajectories for the active + offset wells
   const trajectoryIds = useMemo(
@@ -249,7 +302,7 @@ export default function MapPage() {
       <div className="flex items-center justify-center h-96 text-royal-700">
         <div className="text-center space-y-2">
           <Radar className="w-12 h-12 mx-auto animate-pulse" aria-hidden="true" />
-          <p className="text-sm font-medium">Loading well data…</p>
+          <p className="text-sm font-medium">{t('map.loading')}</p>
         </div>
       </div>
     );
@@ -264,7 +317,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-130px)] gap-4">
+    <div className="flex flex-col lg:flex-row h-full gap-4">
       {/* Left panel: active well, radius, filters, synced list */}
       <div className="lg:w-80 max-h-[60vh] lg:max-h-none flex flex-col bg-white rounded-xl border border-line shadow-sm overflow-hidden shrink-0">
         <div className="p-4 border-b border-line bg-royal-50">
@@ -272,7 +325,7 @@ export default function MapPage() {
             htmlFor="active-well"
             className="text-[10px] uppercase font-bold tracking-wider text-royal-700 mb-1 block"
           >
-            Active well
+            {t('map.active_well')}
           </label>
           <select
             id="active-well"
@@ -282,19 +335,19 @@ export default function MapPage() {
           >
             {allWells.map((w) => (
               <option key={w.well_id} value={w.well_id}>
-                {w.name} ({w.status})
+                {w.name} ({formatStatusWord(w.status)})
               </option>
             ))}
           </select>
           {correlationWellIds.length > 0 && (
             <p className="mt-2 text-[10px] text-ink-600 flex items-center gap-1">
               <GitCompareArrows className="w-3 h-3 text-royal-700" aria-hidden="true" />
-              {correlationWellIds.length}/{MAX_CORRELATION_WELLS} wells queued for correlation
+              {t('map.queued', { n: correlationWellIds.length, max: MAX_CORRELATION_WELLS })}
               <Link
                 to="/correlation"
                 className="ml-auto text-royal-600 font-semibold hover:underline"
               >
-                Open →
+                {t('map.open')} →
               </Link>
             </p>
           )}
@@ -306,10 +359,10 @@ export default function MapPage() {
               htmlFor="radius"
               className="text-[10px] uppercase font-bold tracking-wider text-royal-700 flex items-center gap-1"
             >
-              <Crosshair className="w-3 h-3" aria-hidden="true" /> Radius
+              <Crosshair className="w-3 h-3" aria-hidden="true" /> {t('map.radius')}
             </label>
             <span className="text-xs font-bold text-royal-900 bg-royal-100 px-2 py-0.5 rounded tabular-nums">
-              {radiusKm} km
+              {radiusKm} {t('units.km')}
             </span>
           </div>
           <input
@@ -319,7 +372,7 @@ export default function MapPage() {
             max={50}
             value={radiusKm}
             onChange={(e) => setRadiusKm(Number(e.target.value))}
-            aria-valuetext={`${radiusKm} kilometres`}
+            aria-valuetext={t('map.radius_value', { km: radiusKm })}
             className="w-full h-1.5 bg-royal-100 rounded-lg appearance-none cursor-pointer accent-royal-700"
           />
           <div className="flex justify-between text-[10px] text-ink-600 mt-1">
@@ -329,7 +382,7 @@ export default function MapPage() {
                 onClick={() => setRadiusKm(km)}
                 className={`px-1 rounded hover:text-royal-900 ${radiusKm === km ? 'font-bold text-royal-900' : ''}`}
               >
-                {km} km
+                {km} {t('units.km')}
               </button>
             ))}
           </div>
@@ -362,7 +415,7 @@ export default function MapPage() {
           <Suspense
             fallback={
               <div className="absolute inset-0 flex items-center justify-center text-sm text-royal-700 animate-pulse">
-                Loading 3D view…
+                {t('map.loading_3d')}
               </div>
             }
           >
@@ -396,7 +449,7 @@ export default function MapPage() {
           layers={layers}
           onToggleLayer={toggleLayer}
         />
-        {!MAP_MODES[mapMode]?.view && <MapLegend mapMode={mapMode} eventType={filters.eventType} />}
+        {!MAP_MODES[mapMode]?.view && <MapLegend mapMode={mapMode} eventType={filters.eventType} layers={layers} />}
       </div>
 
       {/* Right drawer */}

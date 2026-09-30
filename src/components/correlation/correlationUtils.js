@@ -1,20 +1,44 @@
 /** Pure helpers for the depth-correlation chart (no DOM). */
+import i18n from '../../i18n';
 
 export const ALIGN_OPTIONS = [
   {
     key: 'formation',
-    label: 'Formation',
-    hint: 'Offsets stretched so shared formation tops line up',
+    get label() {
+      return i18n.t('corr.align.formation');
+    },
+    get hint() {
+      return i18n.t('corr.align.formation_hint');
+    },
   },
-  { key: 'tvd', label: 'TVD', hint: 'True vertical depth from surveys' },
-  { key: 'md', label: 'MD', hint: 'Each well on its own measured depth' },
+  {
+    key: 'tvd',
+    label: 'TVD',
+    get hint() {
+      return i18n.t('corr.align.tvd_hint');
+    },
+  },
+  {
+    key: 'md',
+    label: 'MD',
+    get hint() {
+      return i18n.t('corr.align.md_hint');
+    },
+  },
 ];
 
 /** Parameter tracks shown per well in the correlation chart. */
 export const TRACKS = {
   mw: { label: 'MW', unit: 'sg', color: '#0A2A66', digits: 2 },
   rop: { label: 'ROP', unit: 'm/h', color: '#1D4FB8', digits: 0 },
-  torque: { label: 'Torque', unit: 'kN·m', color: '#7C3AED', digits: 0 },
+  torque: {
+    get label() {
+      return i18n.t('params.torque');
+    },
+    unit: 'kN·m',
+    color: '#7C3AED',
+    digits: 0,
+  },
 };
 
 /** Vertical geometry of the chart body: depth (m) <-> y (px). */
@@ -38,11 +62,16 @@ export const EVENT_CODES = {
 
 /** Risk scale for the share of wells with events in a bin (colour + label). */
 export const RATIO_STOPS = [
-  { min: 0, color: '#1E8E5A', label: 'Low' },
-  { min: 0.25, color: '#E0A100', label: 'Watch' },
-  { min: 0.5, color: '#E8871E', label: 'High' },
-  { min: 0.75, color: '#C62D3B', label: 'Critical' },
-];
+  { min: 0, color: '#1E8E5A', key: 'low' },
+  { min: 0.25, color: '#E0A100', key: 'watch' },
+  { min: 0.5, color: '#E8871E', key: 'high' },
+  { min: 0.75, color: '#C62D3B', key: 'critical' },
+].map((s) => ({
+  ...s,
+  get label() {
+    return i18n.t(`corr.ratio.${s.key}`);
+  },
+}));
 
 export function ratioStop(ratio) {
   return [...RATIO_STOPS].reverse().find((s) => ratio >= s.min) || RATIO_STOPS[0];

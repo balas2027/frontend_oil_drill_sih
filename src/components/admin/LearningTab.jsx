@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle2, Circle, Loader2, Play, XCircle } from 'lucide-react';
+import i18n from '../../i18n';
 import { learningApi } from '../../api/admin';
 import { apiErrorMessage } from '../../api/client';
 import { METRIC_LABELS, fmtMetric, metricDelta } from './adminUtils';
+import { RULE_LABELS } from '../risk/riskUtils';
 
 const when = (iso) =>
   iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
@@ -25,7 +27,7 @@ function Steps({ steps }) {
           <li key={s.name} className="flex gap-2 text-[11px]">
             <Icon
               className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${STEP_COLORS[s.status]} ${s.status === 'running' ? 'animate-spin' : ''}`}
-              aria-label={s.status}
+              aria-label={i18n.t(`pipeline.${s.status}`, { defaultValue: s.status })}
             />
             <span className="font-semibold text-royal-900 w-36 shrink-0">
               {s.name.replace(/_/g, ' ')}
@@ -79,7 +81,7 @@ export default function LearningTab() {
       setRuns(r.data.runs);
       setError(null);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not load the learning loop.'));
+      setError(apiErrorMessage(err, i18n.t('admin.learning.load_error')));
     }
   }, []);
 
@@ -100,7 +102,7 @@ export default function LearningTab() {
       await fn();
       await load();
     } catch (err) {
-      setError(apiErrorMessage(err, 'Request failed.'));
+      setError(apiErrorMessage(err, t('admin.request_failed')));
     } finally {
       setBusy(false);
     }
@@ -193,24 +195,30 @@ export default function LearningTab() {
               {t('admin.learning.feedback')}
             </h3>
             <p>
-              Gold set: <b>{fb.gold_set.total}</b> reviewer examples ({fb.gold_set.new} new,{' '}
-              {fb.gold_set.rejected} rejections)
+              {t('admin.learning.gold', {
+                total: fb.gold_set.total,
+                new: fb.gold_set.new,
+                rejected: fb.gold_set.rejected,
+              })}
             </p>
             {fb.gold_set.most_corrected_fields.length > 0 && (
               <p className="text-ink-600">
-                Most corrected:{' '}
+                {t('admin.learning.most_corrected')}:{' '}
                 {fb.gold_set.most_corrected_fields.map((f) => `${f.field} (${f.count})`).join(', ')}
               </p>
             )}
             <p>
-              Alert ratings:{' '}
+              {t('admin.learning.alert_ratings')}:{' '}
               {Object.entries(fb.alerts.by_rule)
-                .map(([rule, r]) => `${rule} ${r.useful}/${r.useful + r.not_useful} useful`)
-                .join(' · ') || 'none yet'}
+                .map(
+                  ([rule, r]) =>
+                    `${RULE_LABELS[rule] || rule} ${t('admin.learning.useful_of', { n: r.useful, total: r.useful + r.not_useful })}`
+                )
+                .join(' · ') || t('admin.learning.none_yet')}
             </p>
             {Object.entries(fb.alerts.threshold_offsets).some(([, v]) => v) && (
               <p className="text-ink-600">
-                Tuned thresholds:{' '}
+                {t('admin.learning.tuned')}:{' '}
                 {Object.entries(fb.alerts.threshold_offsets)
                   .filter(([, v]) => v)
                   .map(([rule, v]) => `${rule} +${v}`)
@@ -218,7 +226,10 @@ export default function LearningTab() {
               </p>
             )}
             <p>
-              Advisor answers: {fb.advisor.useful} useful / {fb.advisor.not_useful} not useful
+              {t('admin.learning.advisor', {
+                useful: fb.advisor.useful,
+                not_useful: fb.advisor.not_useful,
+              })}
             </p>
           </section>
         </div>
@@ -252,12 +263,12 @@ export default function LearningTab() {
                         : 'bg-red-50 text-red-700'
                     }`}
                   >
-                    {r.status}
+                    {t(`pipeline.${r.status}`, { defaultValue: r.status })}
                   </span>
                   <span className="font-semibold text-royal-900">{when(r.started_at)}</span>
                   <span className="text-ink-600">
-                    {r.trigger} · {r.requested_by || 'schedule'}
-                    {r.retrained ? ' · risk model retrained' : ''}
+                    {r.trigger} · {r.requested_by || t('admin.learning.by_schedule')}
+                    {r.retrained ? ` · ${t('admin.learning.retrained')}` : ''}
                   </span>
                   <span
                     className={`ml-auto ${r.flags?.length ? 'text-[#A1202D] font-semibold' : 'text-ink-600'}`}

@@ -6,6 +6,7 @@ import { OverviewTab, ModelsTab, SimulatorTab, SourcesTab } from '../components/
 import UsersTab from '../components/admin/UsersTab';
 import AuditTab from '../components/admin/AuditTab';
 import LearningTab from '../components/admin/LearningTab';
+import NotificationsTab from '../components/admin/NotificationsTab';
 
 const TABS = [
   { key: 'overview', Component: OverviewTab },
@@ -13,6 +14,7 @@ const TABS = [
   { key: 'sources', Component: SourcesTab },
   { key: 'models', Component: ModelsTab },
   { key: 'learning', Component: LearningTab },
+  { key: 'notifications', Component: NotificationsTab },
   { key: 'simulator', Component: SimulatorTab },
   { key: 'audit', Component: AuditTab },
 ];

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { documentsApi } from '../../api/documents';
 import { apiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
@@ -11,6 +12,7 @@ const LIMIT = 15;
 const POLL_MS = 2000;
 
 export default function DocumentsTab({ wellIds }) {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -26,12 +28,12 @@ export default function DocumentsTab({ wellIds }) {
       setError(null);
       return res.data.documents.some((d) => ['queued', 'processing'].includes(d.status));
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not load documents.'));
+      setError(apiErrorMessage(err, t('docs.list.load_error')));
       return false;
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, t]);
 
   // Poll while any document is still in the pipeline
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function DocumentsTab({ wellIds }) {
   const columns = [
     {
       key: 'filename',
-      label: 'Document',
+      label: t('docs.list.document'),
       render: (d) => (
         <span className="font-medium text-royal-900 break-all">
           {d.filename}
@@ -73,35 +75,38 @@ export default function DocumentsTab({ wellIds }) {
     },
     {
       key: 'well_id',
-      label: 'Well',
+      label: t('explorer.cols.well'),
       className: 'font-mono',
-      render: (d) => d.well_id || <span className="text-orange-700 font-sans">unmatched</span>,
+      render: (d) => d.well_id || <span className="text-orange-700 font-sans">{t('docs.list.unmatched')}</span>,
     },
-    { key: 'status', label: 'Status', render: (d) => <DocStatusChip status={d.status} /> },
+    { key: 'status', label: t('explorer.cols.status'), render: (d) => <DocStatusChip status={d.status} /> },
     {
       key: 'pipeline',
-      label: 'Pipeline',
+      label: t('docs.list.pipeline'),
       render: (d) => (d.job ? <PipelineStepper steps={d.job.steps} compact /> : '—'),
     },
     {
       key: 'items',
-      label: 'Extracted',
+      label: t('docs.list.extracted'),
       className: 'tabular-nums whitespace-nowrap',
       render: (d) => {
         const c = d.review_counts || {};
         if (!Object.keys(c).length) return '—';
         return (
           <span className="text-[11px]">
-            {c.auto_accepted || 0} auto · {c.approved || 0} approved ·{' '}
-            <b className={c.pending ? 'text-orange-700' : ''}>{c.pending || 0} pending</b> ·{' '}
-            {c.rejected || 0} rejected
+            {t('docs.list.n_auto', { n: c.auto_accepted || 0 })} ·{' '}
+            {t('docs.list.n_approved', { n: c.approved || 0 })} ·{' '}
+            <b className={c.pending ? 'text-orange-700' : ''}>
+              {t('docs.list.n_pending', { n: c.pending || 0 })}
+            </b>{' '}
+            · {t('docs.list.n_rejected', { n: c.rejected || 0 })}
           </span>
         );
       },
     },
     {
       key: 'uploaded_at',
-      label: 'Uploaded',
+      label: t('docs.list.uploaded'),
       className: 'tabular-nums whitespace-nowrap',
       render: (d) =>
         `${d.uploaded_at?.slice(0, 16).replace('T', ' ')} · ${d.uploaded_by?.split('@')[0]}`,
@@ -124,7 +129,7 @@ export default function DocumentsTab({ wellIds }) {
         rowKey={(d) => d._id}
         onToggle={(id) => navigate(`/documents/${id}`)}
         loading={loading}
-        emptyText="No documents yet - upload a WCR or DDR PDF above."
+        emptyText={t('docs.list.empty')}
       />
       <Pagination page={page} limit={LIMIT} total={data.total} onPage={setPage} />
     </div>

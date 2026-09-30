@@ -1,3 +1,4 @@
+import i18n from '../../i18n';
 import { Fragment } from 'react';
 import { ChevronDown, ChevronUp, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export default function DataTable({
   onToggle,
   renderExpanded,
   loading,
-  emptyText = 'No records',
+  emptyText = i18n.t('table.no_records'),
 }) {
   const sortField = sort?.replace(/^-/, '');
   const desc = sort?.startsWith('-');
@@ -35,7 +36,7 @@ export default function DataTable({
         type="button"
         onClick={() => onSort(active && !desc ? `-${col.sortKey}` : col.sortKey)}
         className="inline-flex items-center gap-1 uppercase hover:text-royal-900"
-        aria-label={`Sort by ${col.label}`}
+        aria-label={i18n.t('table.sort_by', { label: col.label })}
       >
         {col.label}
         <Icon
@@ -114,7 +115,7 @@ export function Pagination({ page, limit, total, onPage }) {
   return (
     <div className="flex items-center justify-between px-3 py-2 border-t border-line text-[11px] text-ink-600">
       <span className="tabular-nums">
-        {from}–{to} of {total}
+        {i18n.t('table.of', { from, to, total })}
       </span>
       <div className="flex items-center gap-1">
         <button
@@ -122,19 +123,19 @@ export function Pagination({ page, limit, total, onPage }) {
           disabled={page <= 1}
           onClick={() => onPage(page - 1)}
           className="p-1 rounded border border-line disabled:opacity-40 hover:bg-royal-100"
-          aria-label="Previous page"
+          aria-label={i18n.t('table.prev')}
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
         <span className="tabular-nums px-1">
-          Page {page} / {pages}
+          {i18n.t('table.page', { page, pages })}
         </span>
         <button
           type="button"
           disabled={page >= pages}
           onClick={() => onPage(page + 1)}
           className="p-1 rounded border border-line disabled:opacity-40 hover:bg-royal-100"
-          aria-label="Next page"
+          aria-label={i18n.t('table.next')}
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </button>

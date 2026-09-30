@@ -17,6 +17,8 @@ const Admin = lazyPage(() => import('./pages/Admin'));
 const Knowledge = lazyPage(() => import('./pages/Knowledge'));
 const Lessons = lazyPage(() => import('./pages/Lessons'));
 const Correlation = lazyPage(() => import('./pages/Correlation'));
+const WellDetail = lazyPage(() => import('./pages/WellDetail'));
+const Alerts = lazyPage(() => import('./pages/Alerts'));
 
 function AdminRoute({ children }) {
   const user = useAuthStore((s) => s.user);
@@ -79,6 +81,14 @@ export default function App() {
             }
           />
           <Route
+            path="wells/:wellId"
+            element={
+              <Page>
+                <WellDetail />
+              </Page>
+            }
+          />
+          <Route
             path="documents"
             element={
               <Page>
@@ -95,10 +105,18 @@ export default function App() {
             }
           />
           <Route
-            path="alerts"
+            path="monitor"
             element={
               <Page>
                 <RiskAlerts />
+              </Page>
+            }
+          />
+          <Route
+            path="alerts"
+            element={
+              <Page>
+                <Alerts />
               </Page>
             }
           />

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import DeckGL from '@deck.gl/react';
 import { OrbitView, COORDINATE_SYSTEM, LinearInterpolator } from '@deck.gl/core';
 import {
@@ -15,7 +17,7 @@ import { wellsApi } from '../../api/wells';
 import { correlationApi } from '../../api/correlation';
 import { pathBetween } from '../correlation/correlationUtils';
 import { apiErrorMessage } from '../../api/client';
-import { EVENT_TYPE_COLORS, formatEventType } from './eventStyles';
+import { EVENT_TYPE_COLORS, formatEventType, formatStatusWord } from './eventStyles';
 import { FORMATION_COLORS } from './formationStyles';
 
 /*
@@ -41,9 +43,9 @@ const ORBIT_VIEW = new OrbitView({ id: 'subsurface', orbitAxis: 'Z', fovy: 45 })
 const VIEW_TRANSITION = new LinearInterpolator(['target', 'zoom', 'rotationX', 'rotationOrbit']);
 
 const PRESETS = {
-  perspective: { rotationX: 28, rotationOrbit: -35, label: 'Perspective' },
-  side: { rotationX: 2, rotationOrbit: 0, label: 'Side (N-S)' },
-  top: { rotationX: 89, rotationOrbit: 0, label: 'Top' },
+  perspective: { rotationX: 28, rotationOrbit: -35 },
+  side: { rotationX: 2, rotationOrbit: 0 },
+  top: { rotationX: 89, rotationOrbit: 0 },
 };
 
 function esriImageUrl([w, s, e, n]) {
@@ -105,6 +107,7 @@ function initialView(scene, ex, size) {
 }
 
 export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, onSelectWell }) {
+  const { t } = useTranslation();
   const wrapRef = useRef(null);
   const [scene, setScene] = useState(null);
   const [error, setError] = useState(null);
@@ -151,7 +154,7 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
       })
       .catch(
         (err) =>
-          !cancelled && setError(apiErrorMessage(err, 'Could not load the subsurface scene.'))
+          !cancelled && setError(apiErrorMessage(err, i18n.t('sub.load_error')))
       )
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -459,21 +462,33 @@ export default function Subsurface3D({ activeWell, nearbyWells, selectedWellId, 
     if (layer.id === 'well-paths') {
       const end = object.path[object.path.length - 1];
       return {
-        text: `${object.name} (${object.trajectory_type})\nTD ${object.total_depth_md} m MD / ${Math.round(end[2])} m TVD`,
+        text: t('sub.tip_well', {
+          name: object.name,
+          type: formatStatusWord(object.trajectory_type),
+          md: object.total_depth_md,
+          tvd: Math.round(end[2]),
+        }),
         style,
       };
     }
     if (layer.id === 'events') {
       return {
-        text: `${formatEventType(object.type)} · ${object.well_name}\n${object.depth_from_md}-${object.depth_to_md} m MD · ${object.formation || ''}\nSeverity ${object.severity}/5`,
+        text: t('sub.tip_event', {
+          type: formatEventType(object.type),
+          well: object.well_name,
+          from: object.depth_from_md,
+          to: object.depth_to_md,
+          formation: object.formation || '',
+          severity: object.severity,
+        }),
         style,
       };
     }
-    if (layer.id === 'formation-surfaces') return { text: `${object.formation} top`, style };
+    if (layer.id === 'formation-surfaces')
+      return { text: t('sub.tip_top', { formation: object.formation }), style };
     if (layer.id === 'hotspot-zones') {
       return {
-        text: `Offset hotspot ${object.depth_from}-${object.depth_to} m MD (active well)
-${object.summary}`,
+        text: `${t('sub.tip_hotspot', { from: object.depth_from, to: object.depth_to })}\n${object.summary}`,
         style,
       };
     }
@@ -506,7 +521,7 @@ ${object.summary}`,
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-royal-900 animate-pulse">
-          Building subsurface scene…
+          {t('sub.building')}
         </div>
       )}
       {error && (
@@ -524,19 +539,19 @@ ${object.summary}`,
           >
             <summary className="list-none cursor-pointer select-none flex items-center justify-between gap-1.5 font-bold text-royal-900 text-xs px-3 py-2">
               <span className="flex items-center gap-1.5">
-                <Box className="w-3.5 h-3.5 text-royal-700" aria-hidden="true" /> Subsurface 3D
+                <Box className="w-3.5 h-3.5 text-royal-700" aria-hidden="true" /> {t('map.modes.subsurface')}
               </span>
               <span className="text-[10px] font-normal text-ink-600 group-open:hidden">
-                Show controls
+                {t('sub.show_controls')}
               </span>
               <span className="text-[10px] font-normal text-ink-600 hidden group-open:inline">
-                Hide
+                {t('sub.hide')}
               </span>
             </summary>
             <div className="px-3 pb-3 space-y-2.5">
               <label className="block">
                 <span className="flex justify-between text-ink-600">
-                  <span>Vertical exaggeration</span>
+                  <span>{t('sub.exaggeration')}</span>
                   <b className="text-royal-900 tabular-nums">{ex.toFixed(1)}×</b>
                 </span>
                 <input
@@ -547,37 +562,31 @@ ${object.summary}`,
                   value={ex}
                   onChange={(e) => setEx(Number(e.target.value))}
                   className="w-full accent-royal-700"
-                  aria-label="Vertical exaggeration"
+                  aria-label={t('sub.exaggeration')}
                 />
               </label>
               <div>
                 <span className="flex items-center gap-1 text-ink-600 mb-1">
-                  <Eye className="w-3 h-3" aria-hidden="true" /> View
+                  <Eye className="w-3 h-3" aria-hidden="true" /> {t('sub.view')}
                 </span>
                 <div className="flex gap-1">
-                  {Object.entries(PRESETS).map(([k, p]) => (
+                  {Object.keys(PRESETS).map((k) => (
                     <button
                       key={k}
                       type="button"
                       onClick={() => applyPreset(k)}
                       className="flex-1 px-1.5 py-1 rounded border border-line hover:bg-royal-100 text-[10px] font-medium"
                     >
-                      {p.label}
+                      {t(`sub.presets.${k}`)}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
                 <span className="flex items-center gap-1 text-ink-600 mb-1">
-                  <LayersIcon className="w-3 h-3" aria-hidden="true" /> Show
+                  <LayersIcon className="w-3 h-3" aria-hidden="true" /> {t('sub.show')}
                 </span>
-                {[
-                  ['formations', 'Formation-top surfaces'],
-                  ['events', 'Drilling events'],
-                  ['hotspots', 'Offset hotspots on active well'],
-                  ['ground', 'Satellite ground surface'],
-                  ['labels', 'Well labels'],
-                ].map(([k, label]) => (
+                {['formations', 'events', 'hotspots', 'ground', 'labels'].map((k) => (
                   <label key={k} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -585,7 +594,7 @@ ${object.summary}`,
                       onChange={() => setShow((s) => ({ ...s, [k]: !s[k] }))}
                       className="accent-royal-700"
                     />
-                    {label}
+                    {t(`sub.layers.${k}`)}
                   </label>
                 ))}
                 {show.ground && (
@@ -597,13 +606,13 @@ ${object.summary}`,
                     value={groundOpacity}
                     onChange={(e) => setGroundOpacity(Number(e.target.value))}
                     className="w-full accent-royal-700 mt-1"
-                    aria-label="Ground imagery opacity"
+                    aria-label={t('sub.ground_opacity')}
                   />
                 )}
               </div>
               <div>
                 <span className="flex items-center gap-1 text-ink-600 mb-1">
-                  <Crosshair className="w-3 h-3" aria-hidden="true" /> Fly to well
+                  <Crosshair className="w-3 h-3" aria-hidden="true" /> {t('sub.fly_to')}
                 </span>
                 <select
                   onChange={(e) => {
@@ -614,22 +623,21 @@ ${object.summary}`,
                   className="w-full text-[11px] border border-line rounded px-1.5 py-1 bg-white"
                 >
                   <option value="" disabled>
-                    Select…
+                    {t('sub.select')}
                   </option>
                   {scene.wells.map((w) => (
                     <option key={w.well_id} value={w.well_id}>
-                      {w.name} ({w.trajectory_type})
+                      {w.name} ({formatStatusWord(w.trajectory_type)})
                     </option>
                   ))}
                 </select>
               </div>
               <p className="text-[10px] text-ink-600 leading-snug">
-                Drag to rotate · Shift/right-drag to pan · scroll to zoom. Depth is TVD from surveys
-                (minimum curvature).
+                {t('sub.help')}
               </p>
               {show.ground && groundError && (
                 <p className="text-[10px] text-[#6B5310]">
-                  Ground imagery unavailable (offline?) - showing grid only.
+                  {t('sub.ground_unavailable')}
                 </p>
               )}
             </div>
@@ -644,7 +652,7 @@ ${object.summary}`,
                   style={{ background: 'rgb(201,162,39)' }}
                   aria-hidden="true"
                 />{' '}
-                Active well
+                {t('sub.legend.active')}
               </span>
               <span className="flex items-center gap-1">
                 <span
@@ -652,7 +660,7 @@ ${object.summary}`,
                   style={{ background: 'rgb(29,79,184)' }}
                   aria-hidden="true"
                 />{' '}
-                Offset
+                {t('sub.legend.offset')}
               </span>
               <span className="flex items-center gap-1">
                 <span
@@ -660,7 +668,7 @@ ${object.summary}`,
                   style={{ background: 'rgb(198,45,59)' }}
                   aria-hidden="true"
                 />{' '}
-                Selected
+                {t('sub.legend.selected')}
               </span>
             </div>
             {show.hotspots && hotspots.length > 0 && (
@@ -670,7 +678,7 @@ ${object.summary}`,
                   style={{ background: 'rgba(232,135,30,0.55)' }}
                   aria-hidden="true"
                 />
-                Look-ahead zone: depth where ≥2 correlated wells had events
+                {t('sub.legend.lookahead')}
               </div>
             )}
             {show.formations && (
@@ -691,21 +699,20 @@ ${object.summary}`,
             )}
             {show.events && (
               <div className="flex flex-wrap gap-x-2 gap-y-0.5 pt-1 border-t border-line">
-                {Object.entries(counts).map(([t, n]) => (
-                  <span key={t} className="flex items-center gap-1 capitalize">
+                {Object.entries(counts).map(([et, n]) => (
+                  <span key={et} className="flex items-center gap-1 capitalize">
                     <span
                       className="w-2.5 h-2.5 rounded-full border border-white"
-                      style={{ background: EVENT_TYPE_COLORS[t] }}
+                      style={{ background: EVENT_TYPE_COLORS[et] }}
                       aria-hidden="true"
                     />
-                    {formatEventType(t)} ({n})
+                    {formatEventType(et)} ({n})
                   </span>
                 ))}
               </div>
             )}
             <p className="text-ink-600">
-              Vertical exaggeration {ex.toFixed(1)}× · {scene.wells.length} wells · synthetic demo
-              data
+              {t('sub.legend.footer', { x: ex.toFixed(1), n: scene.wells.length })}
             </p>
           </div>
 
@@ -716,13 +723,13 @@ ${object.summary}`,
                   {picked.kind === 'event'
                     ? formatEventType(picked.data.type)
                     : picked.kind === 'hotspot'
-                      ? 'Offset hotspot'
+                      ? t('sub.hotspot')
                       : picked.data.name}
                 </h4>
                 <button
                   type="button"
                   onClick={() => setPicked(null)}
-                  aria-label="Close"
+                  aria-label={t('sub.close')}
                   className="p-0.5 hover:bg-royal-100 rounded"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -731,55 +738,56 @@ ${object.summary}`,
               {picked.kind === 'hotspot' ? (
                 <div className="mt-1 space-y-1 text-ink-900">
                   <p className="text-ink-600 tabular-nums">
-                    {picked.data.depth_from}–{picked.data.depth_to} m MD on the active well
+                    {t('sub.hotspot_on_active', { from: picked.data.depth_from, to: picked.data.depth_to })}
                     {picked.data.reference_formation && ` · ${picked.data.reference_formation}`}
                   </p>
                   <p>{picked.data.summary}.</p>
                   {picked.data.wells.map((w) => (
                     <p key={w.well_id} className="text-ink-600 tabular-nums">
-                      {w.well_id}: {w.md_from}–{w.md_to} m MD
+                      {w.well_id}: {w.md_from}–{w.md_to} {t('units.m_md')}
                     </p>
                   ))}
                   {picked.data.mitigations.length > 0 && (
                     <p>
-                      <span className="text-ink-600">Done before:</span>{' '}
+                      <span className="text-ink-600">{t('sub.done_before')}:</span>{' '}
                       {picked.data.mitigations.map((m) => m.text).join('; ')}
                     </p>
                   )}
                   <p className="text-[10px] text-ink-600">
-                    Aligned on formation tops. Offset wells suggest extra care here; the rig
-                    decides.
+                    {t('sub.hotspot_note')}
                   </p>
                 </div>
               ) : picked.kind === 'event' ? (
                 <div className="mt-1 space-y-1 text-ink-900">
                   <p className="text-ink-600 tabular-nums">
                     {picked.data.well_name} · {picked.data.depth_from_md}–{picked.data.depth_to_md}{' '}
-                    m MD · {Math.round(picked.data.pos[2])} m TVD
+                    {t('units.m_md')} · {Math.round(picked.data.pos[2])} {t('units.m_tvd')}
                   </p>
                   <p>
-                    Formation: {picked.data.formation || '—'} · Severity {picked.data.severity}/5
+                    {t('sub.formation')}: {picked.data.formation || '—'} ·{' '}
+                    {t('severity.short', { value: picked.data.severity })}
                   </p>
                   {picked.data.mitigation && (
                     <p>
-                      <span className="text-ink-600">Mitigation:</span> {picked.data.mitigation}
+                      <span className="text-ink-600">{t('map.drawer.mitigation')}:</span>{' '}
+                      {picked.data.mitigation}
                     </p>
                   )}
                   {picked.data.has_source && (
-                    <p className="text-emerald-700">Source report linked (open in Data Explorer)</p>
+                    <p className="text-emerald-700">{t('sub.source_linked')}</p>
                   )}
                 </div>
               ) : (
                 <div className="mt-1 space-y-1 text-ink-600 tabular-nums">
                   <p className="capitalize">
-                    {picked.data.trajectory_type} · {picked.data.status}
+                    {formatStatusWord(picked.data.trajectory_type)} · {formatStatusWord(picked.data.status)}
                   </p>
                   <p>
-                    TD {picked.data.total_depth_md} m MD ·{' '}
-                    {Math.round(picked.data.path[picked.data.path.length - 1][2])} m TVD
+                    TD {picked.data.total_depth_md} {t('units.m_md')} ·{' '}
+                    {Math.round(picked.data.path[picked.data.path.length - 1][2])} {t('units.m_tvd')}
                   </p>
                   <p>
-                    {picked.data.events.length} events · {picked.data.tops.length} formation tops
+                    {t('sub.well_counts', { events: picked.data.events.length, tops: picked.data.tops.length })}
                   </p>
                 </div>
               )}
@@ -787,7 +795,7 @@ ${object.summary}`,
           )}
 
           <div className="absolute bottom-1 right-2 z-10 text-[9px] text-white/90 drop-shadow">
-            Ground imagery © Esri, Maxar, Earthstar Geographics · rendering: deck.gl (MIT)
+            {t('sub.attribution')}
           </div>
         </>
       )}

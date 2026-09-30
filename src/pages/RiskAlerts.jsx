@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertOctagon,
   AlertTriangle,
   Bell,
   FileDown,
+  Mail,
   Gauge,
   Volume2,
   VolumeX,
@@ -22,6 +24,8 @@ import AlertFeed from '../components/risk/AlertFeed';
 import ParamMiniCharts from '../components/risk/ParamMiniChart';
 import SimulatorPanel from '../components/risk/SimulatorPanel';
 import { RiskLevelChip } from '../components/risk/LevelChip';
+import RiskEmailDialog from '../components/risk/RiskEmailDialog';
+import { formatStatusWord } from '../components/map/eventStyles';
 import { appendRecords, fmtPct, levelFor, mergeAlerts } from '../components/risk/riskUtils';
 
 const WELL_KEY = 'nwis_risk_well';
@@ -72,13 +76,16 @@ const matchesFilters = (a, f) =>
 export default function RiskAlerts() {
   const { t } = useTranslation();
   const [briefBusy, setBriefBusy] = useState(false);
+  const [emailRisk, setEmailRisk] = useState(null);
   const user = useAuthStore((s) => s.user);
   const activeWellId = useMapStore((s) => s.activeWellId);
   const radiusKm = useMapStore((s) => s.radiusKm);
 
   const [wells, setWells] = useState([]);
   const [replayable, setReplayable] = useState([]);
-  const [wellId, setWellId] = useState(() => readStored(WELL_KEY, null));
+  const [searchParams] = useSearchParams();
+  const urlWell = searchParams.get('well');
+  const [wellId, setWellId] = useState(() => urlWell || readStored(WELL_KEY, null));
   const [run, setRun] = useState(null);
   const [records, setRecords] = useState([]);
   const [risk, setRisk] = useState(null);
@@ -107,13 +114,14 @@ export default function RiskAlerts() {
         setModel(m.data);
         const running = s.data.runs.find((r) => r.status === 'running');
         setWellId((cur) => {
+          if (urlWell && w.data.wells.some((x) => x.well_id === urlWell)) return urlWell;
           if (running) return running.well_id;
           if (cur && w.data.wells.some((x) => x.well_id === cur)) return cur;
           if (activeWellId) return activeWellId;
           return s.data.replayable_wells[0] || w.data.wells[0]?.well_id || null;
         });
       })
-      .catch((err) => setError(apiErrorMessage(err, 'Could not load wells.')));
+      .catch((err) => setError(apiErrorMessage(err, t('explorer.wells.load_error'))));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -167,14 +175,14 @@ export default function RiskAlerts() {
   // No live replay: look-ahead at the chosen depth (debounced), offsets + recorded history
   useEffect(() => {
     if (!wellId || live) return undefined;
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       riskApi
         .lookahead(wellId, { depth_md: depth, radius_km: radiusKm })
         .then((res) => setRisk(res.data))
-        .catch((err) => setError(apiErrorMessage(err, 'Look-ahead failed.')));
+        .catch((err) => setError(apiErrorMessage(err, t('risk.page.lookahead_failed'))));
     }, 300);
-    return () => clearTimeout(t);
-  }, [wellId, depth, live, radiusKm]);
+    return () => clearTimeout(timer);
+  }, [wellId, depth, live, radiusKm, t]);
 
   // Alerts: REST list (also replays anything missed while disconnected) + WebSocket push
   const loadAlerts = useCallback(() => {
@@ -182,8 +190,8 @@ export default function RiskAlerts() {
     alertsApi
       .list({ well_id: wellId, status: filters.status, level: filters.level, limit: 100 })
       .then((res) => setAlerts(res.data.alerts))
-      .catch((err) => setError(apiErrorMessage(err, 'Could not load alerts.')));
-  }, [wellId, filters]);
+      .catch((err) => setError(apiErrorMessage(err, t('risk.page.alerts_failed'))));
+  }, [wellId, filters, t]);
   useEffect(loadAlerts, [loadAlerts]);
 
   const filtersRef = useRef(filters);
@@ -221,7 +229,7 @@ export default function RiskAlerts() {
       setAlerts((cur) => mergeAlerts(cur, [res.data]).filter((x) => matchesFilters(x, filters)));
       if (banner?._id === id) setBanner(null);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Action failed.'));
+      setError(apiErrorMessage(err, t('risk.page.action_failed')));
     } finally {
       setBusyAlert(null);
     }
@@ -233,7 +241,7 @@ export default function RiskAlerts() {
       const res = await alertsApi.feedback(id, useful);
       setAlerts((cur) => mergeAlerts(cur, [res.data.alert]));
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not save feedback.'));
+      setError(apiErrorMessage(err, t('risk.page.feedback_failed')));
     } finally {
       setBusyAlert(null);
     }
@@ -248,7 +256,7 @@ export default function RiskAlerts() {
       setRecords([]);
       setAlerts([]);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not start the replay.'));
+      setError(apiErrorMessage(err, t('risk.page.start_failed')));
     } finally {
       setBusy(false);
     }
@@ -261,7 +269,7 @@ export default function RiskAlerts() {
       setRun(res.data);
       setDepth(Math.round(res.data.depth_md));
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not stop the replay.'));
+      setError(apiErrorMessage(err, t('risk.page.stop_failed')));
     } finally {
       setBusy(false);
     }
@@ -272,7 +280,7 @@ export default function RiskAlerts() {
     try {
       await downloadBriefPdf(wellId, radiusKm);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not create the brief.'));
+      setError(apiErrorMessage(err, t('risk.page.brief_failed')));
     } finally {
       setBriefBusy(false);
     }
@@ -302,18 +310,16 @@ export default function RiskAlerts() {
           <div className="space-y-2">
             <div>
               <span className="text-xs uppercase font-bold tracking-wider text-royal-700 flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Phase 6 · Risk & alert
-                agents
+                <AlertTriangle className="w-4 h-4" aria-hidden="true" /> {t('risk.page.kicker')}
               </span>
               <h2 className="text-xl font-bold text-royal-900 font-serif">{t('risk.title')}</h2>
               <p className="text-xs text-ink-600 mt-0.5">
-                Look-ahead risk from offset wells within {radiusKm} km and live drilling parameters.
-                Offset wells suggest - the drilling engineer decides.
+                {t('risk.page.subtitle', { r: radiusKm })}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <label className="flex items-center gap-2">
-                <span className="text-ink-600">Well</span>
+                <span className="text-ink-600">{t('explorer.cols.well')}</span>
                 <select
                   value={wellId || ''}
                   onChange={(e) => setWellId(e.target.value)}
@@ -321,15 +327,15 @@ export default function RiskAlerts() {
                 >
                   {wells.map((w) => (
                     <option key={w.well_id} value={w.well_id}>
-                      {w.well_id} · {w.status}
-                      {replayable.includes(w.well_id) ? ' · replayable' : ''}
+                      {w.well_id} · {formatStatusWord(w.status)}
+                      {replayable.includes(w.well_id) ? ` · ${t('risk.page.replayable')}` : ''}
                     </option>
                   ))}
                 </select>
               </label>
               {!live && (
                 <label className="flex items-center gap-2">
-                  <span className="text-ink-600">Bit depth</span>
+                  <span className="text-ink-600">{t('risk.page.bit_depth')}</span>
                   <input
                     type="range"
                     min="0"
@@ -338,7 +344,7 @@ export default function RiskAlerts() {
                     value={depth}
                     onChange={(e) => setDepth(Number(e.target.value))}
                     className="w-40 accent-royal-700"
-                    aria-label="Bit depth for the look-ahead"
+                    aria-label={t('risk.page.bit_depth_aria')}
                   />
                   <input
                     type="number"
@@ -363,7 +369,7 @@ export default function RiskAlerts() {
                 ) : (
                   <VolumeX className="w-3.5 h-3.5" />
                 )}
-                Critical sound {soundOn ? 'on' : 'off'}
+                {soundOn ? t('risk.page.sound_on') : t('risk.page.sound_off')}
               </button>
               <button
                 type="button"
@@ -401,8 +407,10 @@ export default function RiskAlerts() {
           <AlertOctagon className="w-6 h-6 text-[#C62D3B] shrink-0" aria-hidden="true" />
           <div className="flex-1 text-xs">
             <p className="font-bold text-[#8F1D28] uppercase tracking-wide text-[11px]">
-              Critical alert · {banner.well_id} · bit{' '}
-              {Math.round(banner.depth_md).toLocaleString('en-IN')} m
+              {t('risk.page.critical_banner', {
+                well: banner.well_id,
+                depth: Math.round(banner.depth_md).toLocaleString('en-IN'),
+              })}
             </p>
             <p className="font-semibold text-royal-900 text-sm">{banner.title}</p>
             <p className="text-ink-900">{banner.message}</p>
@@ -413,14 +421,14 @@ export default function RiskAlerts() {
               onClick={() => act(banner._id, 'ack')}
               className="px-3 py-1.5 rounded-lg bg-royal-700 hover:bg-royal-900 text-white text-xs font-medium"
             >
-              Acknowledge
+              {t('risk.feed.ack')}
             </button>
           )}
           <button
             type="button"
             onClick={() => setBanner(null)}
             className="p-1 rounded hover:bg-white"
-            aria-label="Hide banner"
+            aria-label={t('risk.page.hide_banner')}
           >
             <X className="w-4 h-4 text-ink-600" />
           </button>
@@ -430,7 +438,7 @@ export default function RiskAlerts() {
       {error && (
         <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded flex justify-between">
           {error}
-          <button type="button" onClick={() => setError(null)} aria-label="Dismiss error">
+          <button type="button" onClick={() => setError(null)} aria-label={t('risk.page.dismiss_error')}>
             <X className="w-3.5 h-3.5" />
           </button>
         </p>
@@ -440,12 +448,15 @@ export default function RiskAlerts() {
         {/* Ribbon */}
         <section
           className="bg-white p-3 rounded-xl border border-line shadow-sm"
-          aria-label="Risk ribbon"
+          aria-label={t('risk.page.ribbon_aria')}
         >
-          <h3 className="text-sm font-bold text-royal-900 mb-1">Look-ahead ribbon</h3>
+          <h3 className="text-sm font-bold text-royal-900 mb-1">{t('risk.page.ribbon')}</h3>
           <p className="text-[11px] text-ink-600 mb-2 tabular-nums">
-            Bit {risk ? Math.round(risk.depth_md).toLocaleString('en-IN') : '—'} m MD
-            {risk?.formation && ` · ${risk.formation}`} · next {risk?.window_m ?? 300} m
+            {t('risk.page.bit', {
+              depth: risk ? Math.round(risk.depth_md).toLocaleString('en-IN') : '—',
+            })}
+            {risk?.formation && ` · ${risk.formation}`} ·{' '}
+            {t('risk.page.next', { m: risk?.window_m ?? 300 })}
           </p>
           {risk ? (
             <RiskRibbon
@@ -456,7 +467,7 @@ export default function RiskAlerts() {
               onSelectType={setSelectedType}
             />
           ) : (
-            <p className="text-xs text-ink-600 animate-pulse">Loading…</p>
+            <p className="text-xs text-ink-600 animate-pulse">{t('common.loading')}</p>
           )}
         </section>
 
@@ -464,13 +475,13 @@ export default function RiskAlerts() {
         <section className="bg-white p-4 rounded-xl border border-line shadow-sm space-y-3 min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-bold text-royal-900 flex items-center gap-1.5">
-              <Gauge className="w-4 h-4 text-royal-700" aria-hidden="true" /> Risks in the next{' '}
-              {risk?.horizon_m ?? 150} m
+              <Gauge className="w-4 h-4 text-royal-700" aria-hidden="true" />{' '}
+              {t('risk.page.risks_next', { m: risk?.horizon_m ?? 150 })}
             </h3>
             {risk && (
               <span className="text-[10px] text-ink-600">
-                {risk.live ? 'Offset history + live parameters' : 'Offset history only'} ·{' '}
-                {risk.n_offsets} offset wells
+                {risk.live ? t('risk.page.src_live') : t('risk.page.src_offsets')} ·{' '}
+                {t('risk.page.n_offsets', { n: risk.n_offsets })}
                 {risk.model_version && ` · ${risk.model_version}`}
               </span>
             )}
@@ -486,17 +497,19 @@ export default function RiskAlerts() {
                 const l = levelFor(r.probability);
                 const active = r.type === selected?.type;
                 return (
-                  <li key={r.type}>
+                  <li key={r.type} className="relative">
                     <button
                       type="button"
                       onClick={() => setSelectedType(r.type)}
                       aria-pressed={active}
-                      className={`w-full text-left p-2 rounded-lg border text-xs ${
+                      className={`w-full text-left p-2 pr-9 rounded-lg border text-xs ${
                         active ? 'border-royal-700 bg-royal-100' : 'border-line hover:bg-royal-50'
                       }`}
                     >
                       <span className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-royal-900">{r.label}</span>
+                        <span className="font-semibold text-royal-900">
+                          {t(`risk_types.${r.type}`, { defaultValue: r.label })}
+                        </span>
                         <RiskLevelChip p={r.probability} />
                       </span>
                       <span className="flex items-center gap-2 mt-1">
@@ -514,6 +527,21 @@ export default function RiskAlerts() {
                         </span>
                       </span>
                     </button>
+                    {canActOnAlerts(user) && (
+                      <button
+                        type="button"
+                        onClick={() => setEmailRisk(r)}
+                        className="absolute top-1.5 right-1.5 p-1 rounded-md border border-line bg-white text-royal-700 hover:bg-royal-100 focus:outline-none focus:ring-2 focus:ring-royal-600"
+                        aria-label={t('risk.mail.button', {
+                          type: t(`risk_types.${r.type}`, { defaultValue: r.label }),
+                        })}
+                        title={t('risk.mail.button', {
+                          type: t(`risk_types.${r.type}`, { defaultValue: r.label }),
+                        })}
+                      >
+                        <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    )}
                   </li>
                 );
               })}
@@ -529,12 +557,18 @@ export default function RiskAlerts() {
         {/* Alerts */}
         <section
           className="bg-white p-3 rounded-xl border border-line shadow-sm xl:col-auto lg:col-span-2 xl:col-span-1"
-          aria-label="Alerts"
+          aria-label={t('risk.page.alerts')}
         >
           <h3 className="text-sm font-bold text-royal-900 mb-2 flex items-center gap-1.5">
-            <Bell className="w-4 h-4 text-royal-700" aria-hidden="true" /> Alerts · {wellId}
+            <Bell className="w-4 h-4 text-royal-700" aria-hidden="true" /> {t('risk.page.alerts')} · {wellId}
+            <Link
+              to={`/alerts?well=${wellId || ''}`}
+              className="text-[10px] font-normal text-royal-600 hover:underline"
+            >
+              {t('alerts.all_link')}
+            </Link>
             <span className="ml-auto text-[10px] font-normal text-ink-600">
-              {alertsState === 'open' ? 'live' : alertsState}
+              {t(`risk.ws.${alertsState}`, { defaultValue: alertsState })}
             </span>
           </h3>
           <AlertFeed
@@ -553,9 +587,9 @@ export default function RiskAlerts() {
       {/* Live parameters */}
       <section className="bg-white p-4 rounded-xl border border-line shadow-sm">
         <h3 className="text-sm font-bold text-royal-900 mb-2">
-          Live parameters{' '}
+          {t('risk.page.live_params')}{' '}
           <span className="text-[11px] font-normal text-ink-600">
-            {records.length ? `last ${records.length} records` : ''}
+            {records.length ? t('risk.page.last_records', { n: records.length }) : ''}
           </span>
         </h3>
         <ParamMiniCharts records={records} />
@@ -565,15 +599,30 @@ export default function RiskAlerts() {
         <p className="text-[11px] text-ink-600">
           {model.trained ? (
             <>
-              Model {model.version} · trained on {model.training_wells?.length} replayed wells
-              (synthetic){' '}
+              {t('risk.page.model', {
+                version: model.version,
+                n: model.training_wells?.length,
+              })}{' '}
               {replay &&
-                `· replay: ${Math.round((replay.event_recall || 0) * 100)} % of events warned, median lead ${replay.median_lead_m} m, ${replay.serious_false_per_1000m} false warnings per 1000 m`}
+                `· ${t('risk.page.replay_stats', {
+                  recall: Math.round((replay.event_recall || 0) * 100),
+                  lead: replay.median_lead_m,
+                  fp: replay.serious_false_per_1000m,
+                })}`}
             </>
           ) : (
-            'No trained model - offset prior and live-anomaly rules are used (cold start).'
+            t('risk.page.no_model')
           )}
         </p>
+      )}
+      {emailRisk && risk && (
+        <RiskEmailDialog
+          wellId={wellId}
+          risk={emailRisk}
+          depthMd={risk.depth_md}
+          radiusKm={radiusKm}
+          onClose={() => setEmailRisk(null)}
+        />
       )}
     </div>
   );

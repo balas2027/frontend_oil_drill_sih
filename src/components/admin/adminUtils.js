@@ -1,4 +1,5 @@
 /** Pure helpers for the admin page. */
+import i18n from '../../i18n';
 
 /** Share 0..1 as a percentage with one decimal. */
 export const pct = (v) => (v == null ? '—' : `${Math.round(v * 1000) / 10}%`);
@@ -15,16 +16,25 @@ export function detailText(details) {
 }
 
 /** Metrics tracked by the learning loop (backend feedback_agent.snapshot_metrics). */
-export const METRIC_LABELS = {
-  extraction_f1_main: 'Extraction F1 (main set)',
-  extraction_f1_challenge: 'Extraction F1 (challenge set)',
-  advisor_pass_rate: 'Advisor benchmark pass rate',
-  advisor_citation_precision: 'Advisor citation precision',
-  risk_event_recall: 'Risk: events warned',
-  risk_warning_precision: 'Risk: warning+ precision',
-  risk_pr_auc_mud_loss: 'Risk PR-AUC mud loss',
-  risk_pr_auc_kick: 'Risk PR-AUC kick',
-};
+const METRIC_KEYS = [
+  'extraction_f1_main',
+  'extraction_f1_challenge',
+  'advisor_pass_rate',
+  'advisor_citation_precision',
+  'risk_event_recall',
+  'risk_warning_precision',
+  'risk_pr_auc_mud_loss',
+  'risk_pr_auc_kick',
+];
+export const METRIC_LABELS = Object.defineProperties(
+  {},
+  Object.fromEntries(
+    METRIC_KEYS.map((k) => [
+      k,
+      { enumerable: true, get: () => i18n.t(`admin.metrics.${k}`) },
+    ])
+  )
+);
 
 export const fmtMetric = (v) => (v == null ? '—' : Number(v).toFixed(3));
 

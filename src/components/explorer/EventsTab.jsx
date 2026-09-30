@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, XCircle, ShieldCheck, FileSearch, BookmarkPlus } from 'lucide-react';
 import { eventsApi } from '../../api/wells';
 import { apiErrorMessage } from '../../api/client';
@@ -19,6 +20,7 @@ const STATUS_CHIP = {
 };
 
 function SeverityChip({ value }) {
+  const { t } = useTranslation();
   const cls =
     value >= 4
       ? 'bg-red-50 text-red-700 border-red-200'
@@ -27,12 +29,13 @@ function SeverityChip({ value }) {
         : 'bg-emerald-50 text-emerald-700 border-emerald-200';
   return (
     <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold tabular-nums ${cls}`}>
-      {value}/5
+      {t('severity.short', { value })}
     </span>
   );
 }
 
 function EventDetail({ event, reviewer, onReviewed }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const ctx = event.drilling_context || {};
@@ -45,7 +48,7 @@ function EventDetail({ event, reviewer, onReviewed }) {
       const res = await eventsApi.updateEvent(event._id, { extraction: { status } });
       onReviewed(res.data);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Review failed.'));
+      setError(apiErrorMessage(err, t('explorer.events.review_failed')));
     } finally {
       setBusy(false);
     }
@@ -55,27 +58,33 @@ function EventDetail({ event, reviewer, onReviewed }) {
     <div className="grid md:grid-cols-3 gap-4 text-xs">
       <div className="md:col-span-2 space-y-1.5">
         <p>
-          <span className="text-ink-600">Description:</span> {event.description || '—'}
+          <span className="text-ink-600">{t('explorer.events.description')}:</span>{' '}
+          {event.description || '—'}
         </p>
         <p>
-          <span className="text-ink-600">Cause:</span> {event.cause || '—'}
+          <span className="text-ink-600">{t('explorer.events.cause')}:</span> {event.cause || '—'}
         </p>
         <p>
-          <span className="text-ink-600">Mitigation:</span>{' '}
+          <span className="text-ink-600">{t('map.drawer.mitigation')}:</span>{' '}
           <b className="text-royal-900">{event.mitigation || '—'}</b>
         </p>
         <p>
-          <span className="text-ink-600">Outcome:</span> {event.outcome || '—'}
+          <span className="text-ink-600">{t('explorer.events.outcome')}:</span>{' '}
+          {event.outcome || '—'}
         </p>
         <p className="tabular-nums">
-          <span className="text-ink-600">Impact:</span> NPT {impact.npt_hours ?? '—'} h · Cost ₹
-          {impact.cost_inr?.toLocaleString('en-IN') ?? '—'}
-          {impact.volume_lost_bbl != null && ` · Lost ${impact.volume_lost_bbl} bbl`}
+          <span className="text-ink-600">{t('explorer.events.impact')}:</span>{' '}
+          {t('explorer.events.impact_line', {
+            npt: impact.npt_hours ?? '—',
+            cost: impact.cost_inr?.toLocaleString('en-IN') ?? '—',
+          })}
+          {impact.volume_lost_bbl != null &&
+            ` · ${t('explorer.events.lost', { bbl: impact.volume_lost_bbl })}`}
         </p>
       </div>
       <div className="space-y-2">
         <h4 className="text-[10px] uppercase font-bold tracking-wider text-royal-700">
-          Drilling context
+          {t('explorer.events.context')}
         </h4>
         <p className="tabular-nums text-ink-900">
           MW {ctx.mud_weight ?? '—'} sg · ROP {ctx.rop ?? '—'} m/h · WOB {ctx.wob ?? '—'} t · RPM{' '}
@@ -83,11 +92,15 @@ function EventDetail({ event, reviewer, onReviewed }) {
           {ctx.flow_in ?? '—'} gpm
         </p>
         <p className="text-ink-600">
-          Extraction: {event.extraction?.model_version || '—'}, confidence{' '}
-          {event.extraction?.confidence != null
-            ? Math.round(event.extraction.confidence * 100) + '%'
-            : '—'}
-          {event.extraction?.verified_by && ` · reviewed by ${event.extraction.verified_by}`}
+          {t('explorer.events.extraction', {
+            model: event.extraction?.model_version || '—',
+            conf:
+              event.extraction?.confidence != null
+                ? Math.round(event.extraction.confidence * 100) + '%'
+                : '—',
+          })}
+          {event.extraction?.verified_by &&
+            ` · ${t('explorer.events.reviewed_by', { who: event.extraction.verified_by })}`}
         </p>
         <p>
           {event.source?.doc_id && !event.source.doc_deleted ? (
@@ -97,11 +110,11 @@ function EventDetail({ event, reviewer, onReviewed }) {
               }`}
               className="inline-flex items-center gap-1 text-royal-600 hover:underline font-medium"
             >
-              <FileSearch className="w-3.5 h-3.5" aria-hidden="true" /> View source (page{' '}
-              {event.source.page})
+              <FileSearch className="w-3.5 h-3.5" aria-hidden="true" />{' '}
+              {t('explorer.events.view_source', { page: event.source.page })}
             </Link>
           ) : (
-            <span className="text-ink-600">No source document linked yet</span>
+            <span className="text-ink-600">{t('explorer.events.no_source')}</span>
           )}
         </p>
         {reviewer && (
@@ -112,7 +125,7 @@ function EventDetail({ event, reviewer, onReviewed }) {
               onClick={() => review('verified')}
               className="flex items-center gap-1 bg-royal-700 hover:bg-royal-900 text-white text-[11px] font-medium px-2.5 py-1.5 rounded-md disabled:opacity-40"
             >
-              <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Verify
+              <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> {t('explorer.events.verify')}
             </button>
             <button
               type="button"
@@ -120,7 +133,7 @@ function EventDetail({ event, reviewer, onReviewed }) {
               onClick={() => review('rejected')}
               className="flex items-center gap-1 border border-red-600 text-red-700 hover:bg-red-50 text-[11px] font-medium px-2.5 py-1.5 rounded-md disabled:opacity-40"
             >
-              <XCircle className="w-3.5 h-3.5" aria-hidden="true" /> Reject
+              <XCircle className="w-3.5 h-3.5" aria-hidden="true" /> {t('explorer.events.reject')}
             </button>
           </div>
         )}
@@ -131,6 +144,7 @@ function EventDetail({ event, reviewer, onReviewed }) {
 }
 
 export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const reviewer = canReview(user);
   const [filters, setFilters] = useState({
@@ -164,7 +178,7 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
           setData(res.data);
           setError(null);
         })
-        .catch((err) => !cancelled && setError(apiErrorMessage(err, 'Could not load events.')))
+        .catch((err) => !cancelled && setError(apiErrorMessage(err, t('explorer.events.load_error'))))
         .finally(() => !cancelled && setLoading(false));
     }, 250);
     return () => {
@@ -190,17 +204,22 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
         checked={selected.includes(e._id)}
         onClick={(ev) => ev.stopPropagation()}
         onChange={() => toggleSelected(e._id)}
-        aria-label={`Select event ${e.well_id} ${e.depth_from_md} m`}
+        aria-label={t('explorer.events.select', { well: e.well_id, depth: e.depth_from_md })}
         className="accent-royal-700"
       />
     ),
   };
   const columns = [
     ...(reviewer ? [selectColumn] : []),
-    { key: 'well_id', label: 'Well', sortKey: 'well_id', className: 'font-mono text-royal-900' },
+    {
+      key: 'well_id',
+      label: t('explorer.cols.well'),
+      sortKey: 'well_id',
+      className: 'font-mono text-royal-900',
+    },
     {
       key: 'type',
-      label: 'Type',
+      label: t('explorer.cols.type'),
       sortKey: 'type',
       render: (e) => (
         <span className="inline-flex items-center gap-1.5 capitalize">
@@ -213,49 +232,49 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
         </span>
       ),
     },
-    { key: 'formation', label: 'Formation' },
+    { key: 'formation', label: t('map.filters.formation') },
     {
       key: 'depth',
-      label: 'Depth (m MD)',
+      label: t('explorer.cols.depth'),
       sortKey: 'depth_from_md',
       className: 'tabular-nums whitespace-nowrap',
       render: (e) => `${e.depth_from_md}–${e.depth_to_md}`,
     },
     {
       key: 'severity',
-      label: 'Severity',
+      label: t('severity.label'),
       sortKey: 'severity',
       render: (e) => <SeverityChip value={e.severity} />,
     },
     {
       key: 'status',
-      label: 'Review',
+      label: t('explorer.cols.review'),
       render: (e) => {
         const st = e.extraction?.status || 'auto';
         return (
           <span
             className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold capitalize ${STATUS_CHIP[st] || ''}`}
           >
-            {st}
+            {t(`explorer.review_status.${st}`, { defaultValue: st })}
           </span>
         );
       },
     },
     {
       key: 'date',
-      label: 'Date',
+      label: t('explorer.cols.date'),
       sortKey: 'date',
       className: 'tabular-nums',
       render: (e) => e.date?.slice(0, 10) ?? '—',
     },
-    { key: 'mitigation', label: 'Mitigation', className: 'max-w-[220px] truncate' },
+    { key: 'mitigation', label: t('map.drawer.mitigation'), className: 'max-w-[220px] truncate' },
   ];
 
   return (
     <div>
       <div className="p-3 flex flex-wrap gap-2 border-b border-line items-center">
         <select
-          aria-label="Well"
+          aria-label={t('explorer.cols.well')}
           className={`${inputCls} normal-case`}
           value={wellFilter}
           onChange={(e) => {
@@ -263,7 +282,7 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
             setPage(1);
           }}
         >
-          <option value="">All wells</option>
+          <option value="">{t('explorer.all_wells')}</option>
           {options.wellIds?.map((w) => (
             <option key={w} value={w}>
               {w}
@@ -271,25 +290,25 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
           ))}
         </select>
         <select
-          aria-label="Event type"
+          aria-label={t('map.filters.event_type')}
           className={inputCls}
           value={filters.type}
           onChange={(e) => setFilter('type', e.target.value)}
         >
-          <option value="">Any type</option>
-          {options.event_types?.map((t) => (
-            <option key={t} value={t}>
-              {formatEventType(t)}
+          <option value="">{t('explorer.any_type')}</option>
+          {options.event_types?.map((et) => (
+            <option key={et} value={et}>
+              {formatEventType(et)}
             </option>
           ))}
         </select>
         <select
-          aria-label="Formation"
+          aria-label={t('map.filters.formation')}
           className={inputCls}
           value={filters.formation}
           onChange={(e) => setFilter('formation', e.target.value)}
         >
-          <option value="">Any formation</option>
+          <option value="">{t('explorer.any_formation')}</option>
           {options.formations?.map((f) => (
             <option key={f} value={f}>
               {f}
@@ -297,30 +316,30 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
           ))}
         </select>
         <input
-          aria-label="Depth from (m)"
+          aria-label={t('explorer.depth_from')}
           type="number"
           min={0}
-          placeholder="From m"
+          placeholder={t('explorer.from_m')}
           value={filters.depth_from}
           onChange={(e) => setFilter('depth_from', e.target.value)}
           className={`${inputCls} w-24`}
         />
         <input
-          aria-label="Depth to (m)"
+          aria-label={t('explorer.depth_to')}
           type="number"
           min={0}
-          placeholder="To m"
+          placeholder={t('explorer.to_m')}
           value={filters.depth_to}
           onChange={(e) => setFilter('depth_to', e.target.value)}
           className={`${inputCls} w-24`}
         />
         <select
-          aria-label="Minimum severity"
+          aria-label={t('explorer.min_severity')}
           className={inputCls}
           value={filters.min_severity}
           onChange={(e) => setFilter('min_severity', e.target.value)}
         >
-          <option value="">Any severity</option>
+          <option value="">{t('explorer.any_severity')}</option>
           {[2, 3, 4, 5].map((n) => (
             <option key={n} value={n}>
               ≥ {n}
@@ -328,21 +347,21 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
           ))}
         </select>
         <select
-          aria-label="Review status"
+          aria-label={t('explorer.review_status_label')}
           className={inputCls}
           value={filters.status}
           onChange={(e) => setFilter('status', e.target.value)}
         >
-          <option value="">Any review status</option>
+          <option value="">{t('explorer.any_review')}</option>
           {['auto', 'verified', 'rejected'].map((s) => (
             <option key={s} value={s}>
-              {s}
+              {t(`explorer.review_status.${s}`)}
             </option>
           ))}
         </select>
         {reviewer && (
           <span className="ml-auto text-[10px] text-emerald-800 flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" /> You can verify events
+            <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" /> {t('explorer.can_verify')}
           </span>
         )}
         {reviewer && (
@@ -352,18 +371,17 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
             onClick={() => setLessonOpen(true)}
             className="flex items-center gap-1 text-[11px] font-medium border border-royal-700 text-royal-700 hover:bg-royal-100 px-2 py-1 rounded-md disabled:opacity-40"
           >
-            <BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Create lesson (
-            {selected.length})
+            <BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" />{' '}
+            {t('explorer.create_lesson', { n: selected.length })}
           </button>
         )}
       </div>
       {savedLesson && (
         <p className="m-3 p-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 rounded">
-          Lesson “{savedLesson.title}” saved -{' '}
+          {t('explorer.lesson_saved', { title: savedLesson.title })}{' '}
           <Link to="/lessons" className="underline">
-            open the Lessons library
+            {t('explorer.open_lessons')}
           </Link>
-          .
         </p>
       )}
       {lessonOpen && (
@@ -397,7 +415,7 @@ export default function EventsTab({ options, wellFilter, onWellFilterChange }) {
           <EventDetail event={e} reviewer={reviewer} onReviewed={onReviewed} />
         )}
         loading={loading}
-        emptyText="No events match these filters."
+        emptyText={t('explorer.events.empty')}
       />
       <Pagination page={page} limit={LIMIT} total={data.total} onPage={setPage} />
     </div>

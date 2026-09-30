@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import i18n from '../../i18n';
 import { EVENT_TYPE_COLORS, formatEventType } from '../map/eventStyles';
 import { formationCss } from '../map/formationStyles';
 import {
@@ -52,12 +53,13 @@ function layout(wells, show) {
 const shortName = (w) => (w.name || w.well_id).replace('Upper Assam ', '');
 
 function alignmentNote(w, isRef) {
-  if (isRef) return 'Reference well';
+  if (isRef) return i18n.t('corr.chart.reference');
   const a = w.alignment || {};
-  if (a.method === 'formation') return `Aligned on ${a.shared_formations.length} tops`;
-  if (a.method === 'md_fallback') return 'Own MD (no alignment)';
-  if (a.method === 'tvd') return 'TVD from surveys';
-  return 'Measured depth';
+  if (a.method === 'formation')
+    return i18n.t('corr.chart.aligned_on', { n: a.shared_formations.length });
+  if (a.method === 'md_fallback') return i18n.t('corr.chart.own_md');
+  if (a.method === 'tvd') return i18n.t('corr.chart.tvd');
+  return i18n.t('corr.chart.md');
 }
 
 export default function DepthTrackChart({
@@ -194,7 +196,7 @@ export default function DepthTrackChart({
         onMouseMove={onMove}
         onMouseLeave={() => onCursor(null)}
         role="img"
-        aria-label={`Depth correlation of ${data.wells.length} wells, ${data.axis_label}`}
+        aria-label={i18n.t('corr.chart.aria', { n: data.wells.length, axis: data.axis_label })}
       >
         <rect width={width} height={height} fill="#FFFFFF" />
 
@@ -232,7 +234,7 @@ export default function DepthTrackChart({
               style={{ cursor: 'pointer' }}
               onClick={() => onSelectHotspot(sel ? null : h.id)}
             >
-              <title>{`Hotspot ${h.depth_from}–${h.depth_to} m: ${h.summary}`}</title>
+              <title>{`${i18n.t('corr.hotspot')} ${h.depth_from}–${h.depth_to} m: ${h.summary}`}</title>
             </rect>
           );
         })}

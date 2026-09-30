@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Play, Square, Timer } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const SPEEDS = [5, 10, 20, 50];
 
@@ -13,6 +14,7 @@ export default function SimulatorPanel({
   onStop,
   wsState,
 }) {
+  const { t } = useTranslation();
   const [startMd, setStartMd] = useState(0);
   const [speed, setSpeed] = useState(10);
   const running = run?.status === 'running';
@@ -27,7 +29,7 @@ export default function SimulatorPanel({
                 className={`w-2 h-2 rounded-full ${running ? 'bg-emerald-500 animate-pulse' : 'bg-ink-600/40'}`}
                 aria-hidden="true"
               />
-              Replay {run.status}
+              {t('risk.sim.replay_status', { status: t(`risk.sim.status.${run.status}`, { defaultValue: run.status }) })}
             </span>
             <span className="tabular-nums text-ink-600">
               {Math.round(run.depth_md).toLocaleString('en-IN')} /{' '}
@@ -41,20 +43,21 @@ export default function SimulatorPanel({
             />
           </div>
           <p className="text-[10px] text-ink-600 mt-1">
-            {run.alerts_fired} alert(s) fired · feed {wsState === 'open' ? 'connected' : wsState}
+            {t('risk.sim.fired', { n: run.alerts_fired })} ·{' '}
+            {t('risk.sim.feed', { state: t(`risk.ws.${wsState}`, { defaultValue: wsState }) })}
             {run.error && <span className="text-red-700"> · {run.error}</span>}
           </p>
         </div>
       ) : (
         <p className="text-ink-600">
-          No live feed for this well. Showing the offset-based look-ahead at the chosen depth.
+          {t('risk.sim.no_feed')}
         </p>
       )}
 
       {isAdmin && canReplay && (
         <div className="flex flex-wrap items-end gap-2 pt-1 border-t border-line">
           <label className="flex flex-col gap-0.5">
-            <span className="text-[10px] text-ink-600">Start depth (m)</span>
+            <span className="text-[10px] text-ink-600">{t('risk.sim.start_depth')}</span>
             <input
               type="number"
               min="0"
@@ -65,7 +68,7 @@ export default function SimulatorPanel({
             />
           </label>
           <label className="flex flex-col gap-0.5">
-            <span className="text-[10px] text-ink-600">Speed</span>
+            <span className="text-[10px] text-ink-600">{t('risk.sim.speed')}</span>
             <select
               value={speed}
               onChange={(e) => setSpeed(Number(e.target.value))}
@@ -85,7 +88,7 @@ export default function SimulatorPanel({
               onClick={onStop}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50"
             >
-              <Square className="w-3.5 h-3.5" aria-hidden="true" /> Stop replay
+              <Square className="w-3.5 h-3.5" aria-hidden="true" /> {t('risk.sim.stop')}
             </button>
           ) : (
             <button
@@ -94,15 +97,14 @@ export default function SimulatorPanel({
               onClick={() => onStart({ startMd, speed })}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-royal-700 hover:bg-royal-900 text-white font-medium disabled:opacity-50"
             >
-              <Play className="w-3.5 h-3.5" aria-hidden="true" /> Replay as live
+              <Play className="w-3.5 h-3.5" aria-hidden="true" /> {t('risk.sim.start')}
             </button>
           )}
         </div>
       )}
       {isAdmin && !canReplay && (
         <p className="text-[10px] text-ink-600 flex items-center gap-1">
-          <Timer className="w-3 h-3" aria-hidden="true" /> This well has no recorded drilling data
-          to replay.
+          <Timer className="w-3 h-3" aria-hidden="true" /> {t('risk.sim.no_data')}
         </p>
       )}
     </div>

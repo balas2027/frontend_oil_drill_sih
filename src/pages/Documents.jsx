@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FileText, UploadCloud, ListChecks, Gauge } from 'lucide-react';
 import { wellsApi } from '../api/wells';
 import DocumentsTab from '../components/documents/DocumentsTab';
@@ -7,14 +8,15 @@ import ReviewTab from '../components/documents/ReviewTab';
 import EvaluationTab from '../components/documents/EvaluationTab';
 
 const TABS = [
-  { key: 'documents', label: 'Upload & documents', icon: UploadCloud },
-  { key: 'review', label: 'Review queue', icon: ListChecks },
-  { key: 'evaluation', label: 'Extraction quality', icon: Gauge },
+  { key: 'documents', icon: UploadCloud },
+  { key: 'review', icon: ListChecks },
+  { key: 'evaluation', icon: Gauge },
 ];
 
 export default function Documents() {
+  const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.key === params.get('tab')) ? params.get('tab') : 'documents';
+  const tab = TABS.some((x) => x.key === params.get('tab')) ? params.get('tab') : 'documents';
   const [wellIds, setWellIds] = useState([]);
 
   useEffect(() => {
@@ -29,20 +31,19 @@ export default function Documents() {
       <div className="bg-white p-5 rounded-xl border border-line shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <span className="text-xs uppercase font-bold tracking-wider text-royal-700 flex items-center gap-1">
-            <FileText className="w-3.5 h-3.5" aria-hidden="true" /> Document intelligence
+            <FileText className="w-3.5 h-3.5" aria-hidden="true" /> {t('docs.kicker')}
           </span>
-          <h2 className="text-xl font-bold text-royal-900 font-serif">Reports &amp; Review</h2>
+          <h2 className="text-xl font-bold text-royal-900 font-serif">{t('docs.title')}</h2>
           <p className="text-xs text-ink-600 mt-1">
-            Upload WCR/DDR PDFs; agents extract events and formation tops with page-level evidence.
-            Low-confidence items wait for a reviewer.
+            {t('docs.subtitle')}
           </p>
         </div>
         <div
           role="tablist"
-          aria-label="Documents view"
+          aria-label={t('docs.view')}
           className="flex flex-wrap bg-royal-50 border border-line rounded-lg p-1 gap-1"
         >
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {TABS.map(({ key, icon: Icon }) => (
             <button
               key={key}
               role="tab"
@@ -54,7 +55,7 @@ export default function Documents() {
                   : 'text-ink-600 hover:bg-royal-100 hover:text-royal-900'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {label}
+              <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {t(`docs.tabs.${key}`)}
             </button>
           ))}
         </div>

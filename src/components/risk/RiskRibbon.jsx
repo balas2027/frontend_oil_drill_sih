@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import i18n from '../../i18n';
 import { formationCss } from '../map/formationStyles';
 import { RISK_LEVELS, RISK_TYPES, binAt, fmtPct, levelFor, riskLabel } from './riskUtils';
 
@@ -41,7 +42,7 @@ export default function RiskRibbon({ ribbon, depth, horizonM, selectedType, onSe
         height={height}
         className="block select-none"
         role="img"
-        aria-label={`Risk ribbon from ${Math.round(top)} to ${Math.round(bottom)} m MD`}
+        aria-label={i18n.t('risk.ribbon.aria', { from: Math.round(top), to: Math.round(bottom) })}
         onMouseMove={onMove}
         onMouseLeave={() => setHover(null)}
       >
@@ -55,7 +56,7 @@ export default function RiskRibbon({ ribbon, depth, horizonM, selectedType, onSe
               onClick={() => onSelectType?.(t.key)}
               className="cursor-pointer"
               role="button"
-              aria-label={`Show ${t.label}`}
+              aria-label={i18n.t('risk.ribbon.show', { label: t.label })}
             >
               <rect
                 x={x + 1}
@@ -181,7 +182,7 @@ export default function RiskRibbon({ ribbon, depth, horizonM, selectedType, onSe
               stroke="#C9A227"
               strokeWidth="3"
             />
-            <title>{`Look-ahead window: next ${horizonM} m`}</title>
+            <title>{i18n.t('risk.ribbon.window', { m: horizonM })}</title>
           </g>
         )}
 
@@ -238,20 +239,23 @@ export default function RiskRibbon({ ribbon, depth, horizonM, selectedType, onSe
             <p className="font-semibold text-royal-900 tabular-nums">
               {hoverBin.from.toLocaleString('en-IN')}–{hoverBin.to.toLocaleString('en-IN')} m MD
               {hoverBin.formation && ` · ${hoverBin.formation}`}
-              {hoverBin.drilled && <span className="font-normal text-ink-600"> · drilled</span>}
+              {hoverBin.drilled && (
+                <span className="font-normal text-ink-600"> · {i18n.t('risk.ribbon.drilled')}</span>
+              )}
             </p>
             <p className="text-ink-600">
               {RISK_TYPES.filter((t) => (hoverBin.risks[t.key] ?? 0) >= 0.05)
                 .sort((a, b) => hoverBin.risks[b.key] - hoverBin.risks[a.key])
                 .map((t) => `${riskLabel(t.key)} ${fmtPct(hoverBin.risks[t.key])}`)
-                .join(' · ') || 'All risks below 5 %'}
+                .join(' · ') || i18n.t('risk.ribbon.all_below')}
             </p>
-            <p className="text-ink-600">{hoverBin.wells_drilled} offset wells drilled this bin</p>
+            <p className="text-ink-600">
+              {i18n.t('risk.ribbon.wells_drilled', { n: hoverBin.wells_drilled })}
+            </p>
           </>
         ) : (
           <p className="text-ink-600">
-            Hover a row for the bin&apos;s probabilities. Click a column to open that risk. Gold bar
-            = look-ahead window; hatched = already drilled.
+            {i18n.t('risk.ribbon.hint')}
           </p>
         )}
       </div>

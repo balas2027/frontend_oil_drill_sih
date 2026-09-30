@@ -1,3 +1,5 @@
+import i18n from '../../i18n';
+
 export const EVENT_TYPE_COLORS = {
   mud_loss: '#E8871E',
   kick: '#C62D3B',
@@ -13,10 +15,16 @@ export const EVENT_TYPE_COLORS = {
 
 /** Event-density ring scale (colour + label, never colour alone). */
 export const EVENT_DENSITY_STOPS = [
-  { min: 0, color: '#1E8E5A', label: '0 events' },
-  { min: 1, color: '#E0A100', label: '1–2' },
-  { min: 3, color: '#E8871E', label: '3–5' },
-  { min: 6, color: '#C62D3B', label: '6+' },
+  { min: 0, color: '#1E8E5A', get label() { return i18n.t('density.none'); } },
+  { min: 1, color: '#E0A100', get label() { return i18n.t('density.few'); } },
+  { min: 3, color: '#E8871E', get label() { return i18n.t('density.some'); } },
+  { min: 6, color: '#C62D3B', get label() { return i18n.t('density.many'); } },
 ];
 
-export const formatEventType = (type) => (type || '').replace(/_/g, ' ');
+/** Event type in the current UI language (falls back to the raw type). */
+export const formatEventType = (type) =>
+  type ? i18n.t(`event_types.${type}`, { defaultValue: type.replace(/_/g, ' ') }) : '';
+
+/** Well status / trajectory words in the current UI language. */
+export const formatStatusWord = (word) =>
+  word ? i18n.t(`status_words.${word}`, { defaultValue: word }) : '';

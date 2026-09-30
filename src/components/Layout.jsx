@@ -17,9 +17,12 @@ import {
   Settings,
   Menu,
   X,
+  ChevronLeft,
+  ChevronRight,
   Keyboard,
   Sun,
   WifiOff,
+  Activity,
 } from 'lucide-react';
 import { useAuthStore, isAdmin } from '../store/authStore';
 import { useUiStore, formatSyncTime } from '../store/uiStore';
@@ -35,7 +38,8 @@ const NAV = [
   { key: 'map', path: '/map', icon: MapPin },
   { key: 'data', path: '/data', icon: Database },
   { key: 'correlation', path: '/correlation', icon: TrendingUp },
-  { key: 'alerts', path: '/alerts', icon: AlertTriangle },
+  { key: 'monitor', path: '/monitor', icon: Activity },
+  { key: 'alerts', path: '/alerts', icon: Bell },
   { key: 'knowledge', path: '/knowledge', icon: BookOpen },
   { key: 'lessons', path: '/lessons', icon: Lightbulb },
   { key: 'documents', path: '/documents', icon: FileText },
@@ -150,14 +154,28 @@ function ShortcutsDialog({ onClose }) {
 export default function Layout() {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuthStore();
-  const { fieldMode, toggleFieldMode, online, lastSync, mobileNavOpen, setMobileNavOpen } =
-    useUiStore();
+  const {
+    fieldMode,
+    toggleFieldMode,
+    online,
+    lastSync,
+    sidebarOpen,
+    toggleSidebar,
+    mobileNavOpen,
+    setMobileNavOpen,
+  } = useUiStore();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const mainRef = useRef(null);
 
   useEffect(() => setMobileNavOpen(false), [location.pathname, setMobileNavOpen]);
+
+  // Notify map/chart canvases to recalculate dimensions when sidebar opens or closes
+  useEffect(() => {
+    const timer = setTimeout(() => window.dispatchEvent(new Event('resize')), 220);
+    return () => clearTimeout(timer);
+  }, [sidebarOpen]);
 
   useShortcuts((action) => {
     if (action === 'help') setShowShortcuts(true);
@@ -176,36 +194,49 @@ export default function Layout() {
   const syncTime = formatSyncTime(lastSync);
   const items = NAV.filter((n) => !n.adminOnly || isAdmin(user));
 
-  const nav = (
+  const renderNav = (collapsed = false) => (
     <nav className="space-y-1" aria-label={t('nav.menu')}>
-      <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-ink-600">
-        {t('nav.menu')}
-      </div>
+      {!collapsed && (
+        <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-ink-600 truncate">
+          {t('nav.menu')}
+        </div>
+      )}
       {items.map((item) => {
         const Icon = item.icon;
         const isActive =
           location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+        const label = t(`nav.${item.key}`);
         return (
           <Link
             key={item.path}
             to={item.path}
             aria-current={isActive ? 'page' : undefined}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+            aria-label={collapsed ? label : undefined}
+            title={collapsed ? label : undefined}
+            className={`flex items-center rounded-lg text-xs font-medium transition-colors ${
+              collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+            } ${
               isActive
-                ? 'bg-royal-100 text-royal-900 font-semibold border-l-4 border-royal-700'
+                ? collapsed
+                  ? 'bg-royal-100 text-royal-900 font-semibold ring-1 ring-royal-700/30'
+                  : 'bg-royal-100 text-royal-900 font-semibold border-l-4 border-royal-700'
                 : 'text-ink-600 hover:bg-royal-50 hover:text-royal-900'
             }`}
           >
             <Icon
-              className={`w-4 h-4 ${isActive ? 'text-royal-700' : 'text-ink-600'}`}
+              className={`w-4 h-4 shrink-0 ${isActive ? 'text-royal-700' : 'text-ink-600'}`}
               aria-hidden="true"
             />
-            <span>{t(`nav.${item.key}`)}</span>
+            {!collapsed && <span className="truncate">{label}</span>}
           </Link>
         );
       })}
     </nav>
   );
+
+  const statusText = `${t('status.title')}: ${online ? t('status.online') : t('status.offline')} (${
+    syncTime ? t('footer.last_sync', { time: syncTime }) : t('footer.never_synced')
+  })`;
 
   const statusBox = (
     <div className="p-3 bg-royal-50 rounded-lg border border-royal-100 text-[11px] text-ink-600">
@@ -227,11 +258,25 @@ export default function Layout() {
     </div>
   );
 
+  const miniStatusBox = (
+    <div
+      className="p-2 bg-royal-50 rounded-lg border border-royal-100 flex items-center justify-center"
+      title={statusText}
+      aria-label={statusText}
+    >
+      {online ? (
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+      ) : (
+        <WifiOff className="w-3.5 h-3.5 text-red-700" aria-hidden="true" />
+      )}
+    </div>
+  );
+
   const ctl =
     'flex items-center gap-1.5 bg-royal-700/60 hover:bg-royal-700 px-2.5 py-2 rounded-lg border border-royal-600 text-xs';
 
   return (
-    <div className="min-h-screen flex flex-col bg-royal-50">
+    <div className="h-screen overflow-hidden flex flex-col bg-royal-50 print:h-auto print:overflow-visible">
       <a
         href="#main-content"
         onClick={(e) => {
@@ -243,14 +288,15 @@ export default function Layout() {
         {t('a11y.skip')}
       </a>
 
-      {/* Top bar - Royal 900 */}
-      <header className="bg-royal-900 text-white shadow-md z-30 print:hidden">
+      {/* Fixed Top bar - Royal 900 */}
+      <header className="sticky top-0 shrink-0 bg-royal-900 text-white shadow-md z-30 print:hidden">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
+            {/* Mobile menu toggle */}
             <button
               type="button"
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-royal-700"
+              className="md:hidden p-2 rounded-lg hover:bg-royal-700 transition-colors"
               aria-label={mobileNavOpen ? t('nav.close_menu') : t('nav.open_menu')}
               aria-expanded={mobileNavOpen}
               aria-controls="mobile-nav"
@@ -329,7 +375,7 @@ export default function Layout() {
       {!online && (
         <div
           role="status"
-          className="bg-[#FDF1E4] border-b border-[#E8871E] text-[#7A3E00] text-xs px-4 py-2 flex items-center gap-2 print:hidden"
+          className="shrink-0 bg-[#FDF1E4] border-b border-[#E8871E] text-[#7A3E00] text-xs px-4 py-2 flex items-center gap-2 print:hidden"
         >
           <WifiOff className="w-4 h-4 shrink-0" aria-hidden="true" />
           {syncTime
@@ -338,60 +384,100 @@ export default function Layout() {
         </div>
       )}
 
+      {/* Mobile slide-over fixed drawer */}
       {mobileNavOpen && (
-        <div
-          id="mobile-nav"
-          className="md:hidden bg-white border-b border-line p-3 space-y-3 print:hidden"
-        >
-          {nav}
-          <div className="flex gap-2 text-xs">
-            <select
-              value={i18n.language}
-              onChange={(e) => i18n.changeLanguage(e.target.value)}
-              aria-label={t('header.language')}
-              className="border border-line rounded-md px-2 py-1.5 bg-white"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={toggleFieldMode}
-              aria-pressed={fieldMode}
-              className="border border-line rounded-md px-2 py-1.5 bg-white"
-            >
-              {t('header.field_mode')}
-            </button>
+        <div className="fixed inset-0 z-40 md:hidden flex print:hidden">
+          <div
+            className="fixed inset-0 bg-royal-900/40"
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            id="mobile-nav"
+            className="relative z-10 w-64 max-w-[80vw] bg-white border-r border-line h-full p-4 flex flex-col justify-between overflow-y-auto shadow-xl"
+          >
+            <div className="space-y-4">
+              {renderNav(false)}
+              <div className="flex gap-2 text-xs pt-2 border-t border-line">
+                <select
+                  value={i18n.language}
+                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                  aria-label={t('header.language')}
+                  className="border border-line rounded-md px-2 py-1.5 bg-white"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={toggleFieldMode}
+                  aria-pressed={fieldMode}
+                  className="border border-line rounded-md px-2 py-1.5 bg-white"
+                >
+                  {t('header.field_mode')}
+                </button>
+              </div>
+            </div>
+            {statusBox}
           </div>
         </div>
       )}
 
-      <div className="flex flex-1">
-        <aside className="w-64 bg-white border-r border-line p-4 hidden md:flex flex-col justify-between print:hidden">
-          {nav}
-          {statusBox}
-        </aside>
+      {/* Body container: Fixed Collapsible Sidebar + Independently Scrollable Main Area */}
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        <div className="relative hidden md:flex shrink-0 h-full print:hidden">
+          <aside
+            id="desktop-sidebar"
+            className={`flex flex-col justify-between bg-white border-r border-line h-full overflow-y-auto overflow-x-hidden transition-all duration-200 ease-in-out ${
+              sidebarOpen ? 'w-64 p-4' : 'w-16 py-4 px-2'
+            }`}
+          >
+            <div>{renderNav(!sidebarOpen)}</div>
+            <div className="mt-4">{sidebarOpen ? statusBox : miniStatusBox}</div>
+          </aside>
 
-        <main
-          id="main-content"
-          ref={mainRef}
-          tabIndex={-1}
-          className="flex-1 min-w-0 p-4 md:p-6 overflow-y-auto focus:outline-none"
-        >
-          <Outlet />
-        </main>
+          {/* Open / Close toggle icon at the vertical middle of the sidebar edge */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={sidebarOpen ? t('nav.close_menu') : t('nav.open_menu')}
+            aria-expanded={sidebarOpen}
+            aria-controls="desktop-sidebar"
+            title={sidebarOpen ? t('nav.close_menu') : t('nav.open_menu')}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-12 rounded-full bg-white border border-line shadow-md flex items-center justify-center text-royal-700 hover:bg-royal-900 hover:text-gold-500 hover:border-royal-900 transition-colors"
+          >
+            {sidebarOpen ? (
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+          <main
+            id="main-content"
+            ref={mainRef}
+            tabIndex={-1}
+            className="flex-1 min-w-0 p-4 md:p-6 overflow-y-auto focus:outline-none"
+          >
+            {/* Re-render the whole page when the UI language changes, so every label,
+                including helpers that read i18n directly, switches together */}
+            <Outlet key={i18n.language} />
+          </main>
+
+          <footer className="shrink-0 print:hidden bg-white border-t border-line py-2.5 px-6 text-center text-xs text-ink-600 flex flex-col md:flex-row justify-between items-center gap-2">
+            <span>{t('footer.version')}</span>
+            <span className="tabular-nums">
+              {syncTime ? t('footer.last_sync', { time: syncTime }) : t('footer.never_synced')}
+            </span>
+            <span className="text-[11px] text-ink-600">{t('footer.notice')}</span>
+          </footer>
+        </div>
       </div>
-
-      <footer className="print:hidden bg-white border-t border-line py-2.5 px-6 text-center text-xs text-ink-600 flex flex-col md:flex-row justify-between items-center gap-2">
-        <span>{t('footer.version')}</span>
-        <span className="tabular-nums">
-          {syncTime ? t('footer.last_sync', { time: syncTime }) : t('footer.never_synced')}
-        </span>
-        <span className="text-[11px] text-ink-600">{t('footer.notice')}</span>
-      </footer>
 
       {showShortcuts && <ShortcutsDialog onClose={() => setShowShortcuts(false)} />}
     </div>

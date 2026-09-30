@@ -7,6 +7,8 @@ export const riskApi = {
   preSpudBrief: (wellId, params = {}) =>
     apiClient.get(`/risk/${wellId}/pre-spud-brief`, { params: clean(params) }),
   model: () => apiClient.get('/risk/model'),
+  recipients: () => apiClient.get('/risk/recipients'),
+  email: (wellId, body) => apiClient.post(`/risk/${wellId}/email`, body, { timeout: 90000 }),
   train: () => apiClient.post('/risk/train'),
   briefPdf: (wellId, params = {}) =>
     apiClient.get(`/risk/${wellId}/pre-spud-brief.pdf`, {

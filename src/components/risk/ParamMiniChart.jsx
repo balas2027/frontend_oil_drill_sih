@@ -1,3 +1,4 @@
+import i18n from '../../i18n';
 import { PARAM_SERIES, sparkPoints } from './riskUtils';
 
 const H = 40;
@@ -7,7 +8,7 @@ export default function ParamMiniCharts({ records, events = [] }) {
   if (!records?.length) {
     return (
       <p className="text-xs text-ink-600">
-        No live parameters yet - they stream here while a well is drilling or being replayed.
+        {i18n.t('risk.params_empty')}
       </p>
     );
   }
@@ -33,7 +34,7 @@ export default function ParamMiniCharts({ records, events = [] }) {
               preserveAspectRatio="none"
               className="w-full h-10 mt-1"
               role="img"
-              aria-label={`${s.label} over the last ${Math.round(d1 - d0)} m`}
+              aria-label={i18n.t('risk.params_aria', { label: s.label, m: Math.round(d1 - d0) })}
             >
               {bands.map((e) => (
                 <rect

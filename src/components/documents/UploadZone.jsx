@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Copy } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { documentsApi } from '../../api/documents';
 import { apiErrorMessage } from '../../api/client';
 
@@ -7,6 +8,7 @@ const MAX_MB = 25;
 
 /** Drag-and-drop multi-file PDF upload (Section 10.8). */
 export default function UploadZone({ wellIds = [], onUploaded, disabled }) {
+  const { t } = useTranslation();
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [wellId, setWellId] = useState('');
@@ -29,11 +31,11 @@ export default function UploadZone({ wellIds = [], onUploaded, disabled }) {
       };
       setUploads((u) => [entry, ...u].slice(0, 12));
       if (!file.name.toLowerCase().endsWith('.pdf')) {
-        update(key, { state: 'error', message: 'Only PDF files are accepted' });
+        update(key, { state: 'error', message: t('docs.upload.only_pdf') });
         continue;
       }
       if (file.size > MAX_MB * 1024 * 1024) {
-        update(key, { state: 'error', message: `Larger than ${MAX_MB} MB` });
+        update(key, { state: 'error', message: t('docs.upload.too_large', { mb: MAX_MB }) });
         continue;
       }
       try {
@@ -45,15 +47,15 @@ export default function UploadZone({ wellIds = [], onUploaded, disabled }) {
           state: res.data.duplicate ? 'duplicate' : 'done',
           progress: 1,
           message: res.data.duplicate
-            ? 'Already uploaded - showing the existing document'
-            : `${res.data.doc_type} · ${res.data.pages} page(s) · ${res.data.pdf_kind}${
-                res.data.well_id ? ` · ${res.data.well_id}` : ' · well not detected'
-              }`,
+            ? t('docs.upload.duplicate')
+            : `${res.data.doc_type} · ${t('docs.upload.pages', { n: res.data.pages })} · ${
+                res.data.pdf_kind
+              } · ${res.data.well_id || t('docs.upload.no_well')}`,
           docId: res.data.doc_id,
         });
         onUploaded?.(res.data);
       } catch (err) {
-        update(key, { state: 'error', message: apiErrorMessage(err, 'Upload failed') });
+        update(key, { state: 'error', message: apiErrorMessage(err, t('docs.upload.failed')) });
       }
     }
   };
@@ -64,7 +66,7 @@ export default function UploadZone({ wellIds = [], onUploaded, disabled }) {
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
-        aria-label="Upload PDF reports: drop files here or press Enter to browse"
+        aria-label={t('docs.upload.aria')}
         onClick={() => !disabled && inputRef.current?.click()}
         onKeyDown={(e) =>
           !disabled && (e.key === 'Enter' || e.key === ' ') && inputRef.current?.click()
@@ -89,15 +91,14 @@ export default function UploadZone({ wellIds = [], onUploaded, disabled }) {
       >
         <UploadCloud className="w-9 h-9 mx-auto text-royal-600 mb-2" aria-hidden="true" />
         <p className="text-sm font-semibold text-royal-900">
-          Drop WCR / DDR PDFs here or click to browse
+          {t('docs.upload.drop')}
         </p>
         <p className="text-[11px] text-ink-600 mt-1">
-          Text and scanned PDFs, up to {MAX_MB} MB each. Files are processed in the background: OCR
-          → extraction → normalisation → validation → indexing.
+          {t('docs.upload.hint', { mb: MAX_MB })}
         </p>
         {disabled && (
           <p className="text-[11px] text-red-700 mt-1">
-            Your role (viewer) cannot upload documents.
+            {t('docs.upload.viewer')}
           </p>
         )}
         <input
@@ -114,13 +115,13 @@ export default function UploadZone({ wellIds = [], onUploaded, disabled }) {
       </div>
 
       <label className="flex items-center gap-2 text-xs">
-        <span className="text-ink-600">Link uploads to well</span>
+        <span className="text-ink-600">{t('docs.upload.link_well')}</span>
         <select
           value={wellId}
           onChange={(e) => setWellId(e.target.value)}
           className="text-xs border border-line rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-royal-600 focus:outline-none"
         >
-          <option value="">Auto-detect from document</option>
+          <option value="">{t('docs.upload.auto_detect')}</option>
           {wellIds.map((w) => (
             <option key={w} value={w}>
               {w}

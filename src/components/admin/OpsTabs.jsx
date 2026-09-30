@@ -5,6 +5,7 @@ import { CheckCircle2, Circle, Play, RefreshCw, Square, XCircle } from 'lucide-r
 import { adminApi } from '../../api/admin';
 import { riskApi, simulatorApi } from '../../api/risk';
 import { apiErrorMessage } from '../../api/client';
+import i18n from '../../i18n';
 import { pct } from './adminUtils';
 
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
@@ -18,9 +19,9 @@ function Stat({ label, value, sub, ok }) {
       <span className="text-lg font-bold text-royal-900 tabular-nums flex items-center gap-1.5">
         {value}
         {ok === true && (
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-label="within target" />
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-label={i18n.t('admin.ov.within')} />
         )}
-        {ok === false && <XCircle className="w-4 h-4 text-[#C62D3B]" aria-label="outside target" />}
+        {ok === false && <XCircle className="w-4 h-4 text-[#C62D3B]" aria-label={i18n.t('admin.ov.outside')} />}
       </span>
       {sub && <span className="text-[10px] text-ink-600 block">{sub}</span>}
     </div>
@@ -44,7 +45,7 @@ function useLoad(fn, deps = []) {
     return fn()
       .then((res) => setState({ data: res.data, error: null, loading: false }))
       .catch((err) =>
-        setState({ data: null, error: apiErrorMessage(err, 'Request failed.'), loading: false })
+        setState({ data: null, error: apiErrorMessage(err, i18n.t('admin.request_failed')), loading: false })
       );
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,115 +79,117 @@ export function OverviewTab() {
               <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {t('common.refresh')}
             </button>
           </div>
-          <Group title="Data">
+          <Group title={t('admin.ov.g_data')}>
             <Stat
-              label="Wells"
+              label={t('admin.ov.wells')}
               value={m.counts.wells}
-              sub={`${m.counts.drilling_ts_wells} with drilling logs`}
+              sub={t('admin.ov.with_logs', { n: m.counts.drilling_ts_wells })}
             />
             <Stat
-              label="Events"
+              label={t('admin.ov.events')}
               value={m.counts.events}
-              sub={`${m.counts.verified_events} verified`}
+              sub={t('admin.ov.verified', { n: m.counts.verified_events })}
             />
             <Stat
-              label="Documents"
+              label={t('admin.ov.documents')}
               value={m.counts.documents}
-              sub={`${m.counts.lessons} lessons curated`}
+              sub={t('admin.ov.lessons', { n: m.counts.lessons })}
             />
-            <Stat label="Users" value={m.counts.users} />
+            <Stat label={t('admin.ov.users')} value={m.counts.users} />
           </Group>
           <Group
-            title="Document extraction"
-            note="F1 from the latest offline evaluation (scripts/evaluate_extraction.py) on labelled synthetic DDRs."
+            title={t('admin.ov.g_extraction')}
+            note={t('admin.ov.extraction_note')}
           >
             <Stat
-              label="Event F1 (main set)"
+              label={t('admin.ov.f1_main')}
               value={num(m.extraction.evaluations?.main?.events?.f1, 3)}
               sub={
                 m.extraction.evaluations?.main
                   ? `P ${num(m.extraction.evaluations.main.events.precision, 3)} · R ${num(m.extraction.evaluations.main.events.recall, 3)}`
-                  : 'not evaluated yet'
+                  : t('admin.ov.not_evaluated')
               }
             />
             <Stat
-              label="Event F1 (challenge set)"
+              label={t('admin.ov.f1_challenge')}
               value={num(m.extraction.evaluations?.challenge?.events?.f1, 3)}
             />
             <Stat
-              label="Auto-accepted"
+              label={t('admin.ov.auto_accepted')}
               value={pct(m.extraction.auto_accept_rate)}
-              sub="of extracted items"
+              sub={t('admin.ov.of_items')}
             />
             <Stat
-              label="Gold set"
+              label={t('admin.ov.gold')}
               value={m.extraction.gold_set_size}
-              sub="reviewer-corrected items"
+              sub={t('admin.ov.corrected')}
             />
           </Group>
-          <Group title="Search & advisor">
+          <Group title={t('admin.ov.g_search')}>
             <Stat
-              label="Benchmark"
+              label={t('admin.ov.benchmark')}
               value={
                 m.advisor.latest_benchmark
                   ? `${m.advisor.latest_benchmark.passed}/${m.advisor.latest_benchmark.questions}`
                   : '—'
               }
-              sub="questions with correct citations"
+              sub={t('admin.ov.with_citations')}
             />
             <Stat
-              label="Citation precision"
+              label={t('admin.ov.cite_precision')}
               value={num(m.advisor.latest_benchmark?.mean_event_citation_precision, 2)}
             />
-            <Stat label="Questions asked" value={m.advisor.questions_asked} />
+            <Stat label={t('admin.ov.questions')} value={m.advisor.questions_asked} />
             <Stat
-              label="Rated useful"
+              label={t('admin.ov.rated_useful')}
               value={`${m.advisor.feedback.useful} / ${m.advisor.feedback.useful + m.advisor.feedback.not_useful}`}
             />
           </Group>
           <Group
-            title="Risk model (leave-one-well-out replay)"
+            title={t('admin.ov.g_risk')}
             note={
               m.risk
-                ? `${m.risk.version} · trained ${when(m.risk.trained_at)} · synthetic data`
-                : 'No trained model - rules only.'
+                ? t('admin.ov.risk_note', { version: m.risk.version, when: when(m.risk.trained_at) })
+                : t('admin.ov.no_model')
             }
           >
             <Stat
-              label="Events warned"
+              label={t('admin.ov.events_warned')}
               value={pct(m.risk?.replay?.event_recall)}
               sub={
                 m.risk?.replay
-                  ? `${m.risk.replay.events_warned}/${m.risk.replay.events_scored} events`
+                  ? t('admin.ov.n_events', { n: m.risk.replay.events_warned, total: m.risk.replay.events_scored })
                   : null
               }
             />
             <Stat
-              label="Median lead distance"
+              label={t('admin.ov.median_lead')}
               value={
                 m.risk?.replay?.median_lead_m != null ? `${m.risk.replay.median_lead_m} m` : '—'
               }
-              sub="before the event top"
+              sub={t('admin.ov.before_top')}
             />
-            <Stat label="Warning+ precision" value={pct(m.risk?.replay?.serious_precision)} />
+            <Stat label={t('admin.ov.warn_precision')} value={pct(m.risk?.replay?.serious_precision)} />
             <Stat
-              label="False warnings / 1000 m"
+              label={t('admin.ov.false_per_km')}
               value={num(m.risk?.replay?.serious_false_per_1000m, 2)}
               sub={
-                m.risk?.replay ? `all levels ${num(m.risk.replay.false_alerts_per_1000m, 2)}` : null
+                m.risk?.replay
+                  ? t('admin.ov.all_levels', { v: num(m.risk.replay.false_alerts_per_1000m, 2) })
+                  : null
               }
             />
           </Group>
-          <Group title="Alerts in operation">
-            <Stat label="Alerts raised" value={m.alerts.total} />
-            <Stat label="Acknowledged / closed" value={pct(m.alerts.acknowledged_share)} />
+          <Group title={t('admin.ov.g_alerts')}>
+            <Stat label={t('admin.ov.alerts_raised')} value={m.alerts.total} />
+            <Stat label={t('admin.ov.acked')} value={pct(m.alerts.acknowledged_share)} />
             <Stat
-              label="Rated useful"
+              label={t('admin.ov.rated_useful')}
               value={pct(m.alerts.useful_share)}
-              sub={`${m.alerts.rated} rated`}
+              sub={t('admin.ov.rated', { n: m.alerts.rated })}
             />
             <Stat
-              label="Mean time to acknowledge"
+              label={t('admin.ov.mtta')}
               value={
                 m.alerts.mean_time_to_ack_s != null
                   ? `${num(m.alerts.mean_time_to_ack_s, 0)} s`
@@ -195,18 +198,18 @@ export function OverviewTab() {
             />
           </Group>
           <Group
-            title="System (since API start)"
-            note="In-process measurements; they reset when the API restarts."
+            title={t('admin.ov.g_system')}
+            note={t('admin.ov.system_note')}
           >
             <Stat
-              label="API p95 latency"
+              label={t('admin.ov.api_p95')}
               value={
                 m.system.api.overall.p95_ms != null ? `${m.system.api.overall.p95_ms} ms` : '—'
               }
-              sub={`${m.system.api.overall.count} requests · p50 ${m.system.api.overall.p50_ms ?? '—'} ms`}
+              sub={t('admin.ov.requests', { n: m.system.api.overall.count, p50: m.system.api.overall.p50_ms ?? '—' })}
             />
             <Stat
-              label="Live data → alert (p95)"
+              label={t('admin.ov.live_p95')}
               value={
                 m.system.live_pipeline.p95_ms != null ? `${m.system.live_pipeline.p95_ms} ms` : '—'
               }
@@ -215,11 +218,11 @@ export function OverviewTab() {
                   ? m.system.live_pipeline.p95_ms < m.system.alert_latency_target_ms
                   : undefined
               }
-              sub={`target < ${m.system.alert_latency_target_ms / 1000} s · ${m.system.live_pipeline.count} evaluations`}
+              sub={t('admin.ov.target', { s: m.system.alert_latency_target_ms / 1000, n: m.system.live_pipeline.count })}
             />
-            <Stat label="Uptime" value={`${Math.round(m.system.api.uptime_s / 60)} min`} />
+            <Stat label={t('admin.ov.uptime')} value={`${Math.round(m.system.api.uptime_s / 60)} min`} />
             <Stat
-              label="Slowest route (p95)"
+              label={t('admin.ov.slowest')}
               value={
                 m.system.api.slowest_routes[0]?.p95_ms != null
                   ? `${m.system.api.slowest_routes[0].p95_ms} ms`
@@ -237,13 +240,14 @@ export function OverviewTab() {
 const SOURCE_OK = new Set(['connected', 'running', 'enabled', 'simulator', 'reachable']);
 
 export function SourcesTab() {
+  const { t } = useTranslation();
   const [state] = useLoad(adminApi.sources);
   return (
     <Status state={state}>
       {state.data && (
         <div className="space-y-3">
           <p className="text-[11px] p-2 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-            {state.data.dataset}. NWIS reads from eRTMAC and never writes to it.
+            {state.data.dataset}. {t('admin.sources.readonly')}
           </p>
           <ul className="divide-y divide-line border border-line rounded-lg">
             {state.data.sources.map((s) => (
@@ -263,7 +267,7 @@ export function SourcesTab() {
                   <p className="text-ink-600 break-words">{s.detail}</p>
                 </div>
                 <span className="px-1.5 py-0.5 rounded bg-royal-50 border border-line text-[10px] font-semibold text-royal-900">
-                  {s.status}
+                  {t(`admin.sources.status.${s.status}`, { defaultValue: s.status })}
                 </span>
               </li>
             ))}
@@ -286,11 +290,15 @@ export function ModelsTab() {
       const res = await riskApi.train();
       const r = res.data.replay;
       setMsg(
-        `Trained ${res.data.version}: ${Math.round((r.event_recall || 0) * 100)} % of events warned, median lead ${r.median_lead_m} m.`
+        t('admin.models.trained_msg', {
+          version: res.data.version,
+          recall: Math.round((r.event_recall || 0) * 100),
+          lead: r.median_lead_m,
+        })
       );
       reload();
     } catch (err) {
-      setMsg(apiErrorMessage(err, 'Training failed.'));
+      setMsg(apiErrorMessage(err, t('admin.models.train_failed')));
     } finally {
       setBusy(false);
     }
@@ -324,9 +332,9 @@ export function ModelsTab() {
                 <tr className="bg-royal-50 text-royal-700 uppercase text-[10px] tracking-wider text-left">
                   <th className="px-3 py-2">{t('admin.models.version')}</th>
                   <th className="px-3 py-2">{t('admin.models.trained')}</th>
-                  <th className="px-3 py-2">Wells / samples</th>
-                  <th className="px-3 py-2">PR-AUC mud loss · kick · stuck</th>
-                  <th className="px-3 py-2">Replay: warned · lead · warning+ precision</th>
+                  <th className="px-3 py-2">{t('admin.models.wells_samples')}</th>
+                  <th className="px-3 py-2">{t('admin.models.prauc')}</th>
+                  <th className="px-3 py-2">{t('admin.models.replay_cols')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -375,9 +383,13 @@ export function ModelsTab() {
                 <span className="text-ink-600">
                   {e.set === 'risk' &&
                     e.replay &&
-                    `recall ${pct(e.replay.event_recall)}, lead ${e.replay.median_lead_m} m`}
-                  {e.events?.f1 != null && `event F1 ${num(e.events.f1, 3)}`}
-                  {e.passed != null && `${e.passed}/${e.questions} passed`}
+                    t('admin.models.eval_risk', {
+                      recall: pct(e.replay.event_recall),
+                      lead: e.replay.median_lead_m,
+                    })}
+                  {e.events?.f1 != null && t('admin.models.eval_f1', { v: num(e.events.f1, 3) })}
+                  {e.passed != null &&
+                    t('admin.models.eval_passed', { n: e.passed, total: e.questions })}
                 </span>
               </li>
             ))}
@@ -408,7 +420,7 @@ export function SimulatorTab() {
       else await simulatorApi.start({ wellId, speed, startMd: 0 });
       await reload();
     } catch (err) {
-      setError(apiErrorMessage(err, 'Simulator request failed.'));
+      setError(apiErrorMessage(err, t('admin.simulator.failed')));
     } finally {
       setBusy(null);
     }
@@ -420,7 +432,7 @@ export function SimulatorTab() {
         <div className="space-y-3 text-xs">
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2">
-              <span className="text-ink-600">Speed</span>
+              <span className="text-ink-600">{t('risk.sim.speed')}</span>
               <select
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
@@ -434,7 +446,7 @@ export function SimulatorTab() {
               </select>
             </label>
             <span className="text-ink-600">
-              Replays start at surface; open Risk &amp; Alerts to watch one live.
+              {t('admin.simulator.hint')}
             </span>
           </div>
           {error && (
@@ -455,13 +467,13 @@ export function SimulatorTab() {
                     <p className="font-semibold text-royal-900">{w}</p>
                     <p className="text-[10px] text-ink-600 tabular-nums">
                       {r
-                        ? `${r.status} · ${Math.round(r.depth_md)} / ${Math.round(r.total_depth_md)} m · ${r.alerts_fired} alerts`
-                        : 'idle'}
+                        ? `${t(`risk.sim.status.${r.status}`, { defaultValue: r.status })} · ${Math.round(r.depth_md)} / ${Math.round(r.total_depth_md)} m · ${t('admin.simulator.n_alerts', { n: r.alerts_fired })}`
+                        : t('risk.ws.idle')}
                     </p>
                   </div>
                   {running && (
-                    <Link to="/alerts" className="text-royal-600 hover:underline text-[11px]">
-                      view
+                    <Link to={`/monitor?well=${w}`} className="text-royal-600 hover:underline text-[11px]">
+                      {t('admin.simulator.view')}
                     </Link>
                   )}
                   <button
@@ -492,11 +504,12 @@ export function SimulatorTab() {
               >
                 <span className="font-semibold text-royal-900 w-24">{r.well_id}</span>
                 <span className="text-ink-600">
-                  {when(r.started_at)} by {r.started_by}
+                  {when(r.started_at)} · {r.started_by}
                 </span>
                 <span className="text-ink-600">
-                  {r.status} · {Math.round(r.start_md)}→{Math.round(r.depth_md)} m ·{' '}
-                  {r.alerts_fired} alerts
+                  {t(`risk.sim.status.${r.status}`, { defaultValue: r.status })} ·{' '}
+                  {Math.round(r.start_md)}→{Math.round(r.depth_md)} m ·{' '}
+                  {t('admin.simulator.n_alerts', { n: r.alerts_fired })}
                 </span>
               </li>
             ))}

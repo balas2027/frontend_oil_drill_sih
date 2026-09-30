@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ListChecks, CheckCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { reviewApi } from '../../api/documents';
 import { apiErrorMessage } from '../../api/client';
 import { useAuthStore, canReview } from '../../store/authStore';
@@ -10,6 +11,7 @@ import { EVENT_TYPE_COLORS, formatEventType } from '../map/eventStyles';
 const STATUSES = ['pending', 'auto_accepted', 'approved', 'rejected'];
 
 export default function ReviewTab({ wellIds }) {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const reviewer = canReview(user);
   const [status, setStatus] = useState('pending');
@@ -31,11 +33,11 @@ export default function ReviewTab({ wellIds }) {
         res.data.items.some((i) => i._id === cur) ? cur : res.data.items[0]?._id || null
       );
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not load the review queue.'));
+      setError(apiErrorMessage(err, t('docs.review.load_error')));
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, t]);
 
   useEffect(() => {
     load();
@@ -46,7 +48,7 @@ export default function ReviewTab({ wellIds }) {
     const idx = items.findIndex((i) => i._id === id);
     const rest = items.filter((i) => i._id !== id);
     setItems(rest);
-    setTotal((t) => Math.max(0, t - 1));
+    setTotal((n) => Math.max(0, n - 1));
     setSelected(rest[Math.min(idx, rest.length - 1)]?._id || null);
   };
 
@@ -55,11 +57,11 @@ export default function ReviewTab({ wellIds }) {
     try {
       const res = await reviewApi.batchApprove({ min_confidence: 0.85 });
       setBatchMsg(
-        `Approved ${res.data.approved} item(s); ${res.data.skipped} skipped (blocking issues).`
+        t('docs.review.batch_result', { approved: res.data.approved, skipped: res.data.skipped })
       );
       load();
     } catch (err) {
-      setBatchMsg(apiErrorMessage(err, 'Batch approve failed.'));
+      setBatchMsg(apiErrorMessage(err, t('docs.review.batch_failed')));
     }
   };
 
@@ -69,7 +71,7 @@ export default function ReviewTab({ wellIds }) {
     <div className="flex flex-col lg:flex-row min-h-[600px]">
       <aside className="lg:w-72 shrink-0 border-b lg:border-b-0 lg:border-r border-line flex flex-col">
         <div className="p-3 border-b border-line space-y-2">
-          <div role="tablist" aria-label="Item status" className="flex flex-wrap gap-1">
+          <div role="tablist" aria-label={t('docs.review.item_status')} className="flex flex-wrap gap-1">
             {STATUSES.map((s) => (
               <button
                 key={s}
@@ -82,12 +84,13 @@ export default function ReviewTab({ wellIds }) {
                     : 'bg-royal-50 text-ink-600 hover:bg-royal-100'
                 }`}
               >
-                {s.replace('_', ' ')}
+                {t(`item_status.${s}`)}
               </button>
             ))}
           </div>
           <p className="text-[11px] text-ink-600 tabular-nums">
-            {total} item(s){status === 'pending' && ' awaiting review, lowest confidence first'}
+            {t('docs.review.n_items', { n: total })}
+            {status === 'pending' && ` ${t('docs.review.awaiting')}`}
           </p>
           {reviewer && status === 'pending' && highConfidence > 0 && (
             <button
@@ -95,8 +98,8 @@ export default function ReviewTab({ wellIds }) {
               onClick={batchApprove}
               className="w-full flex items-center justify-center gap-1 border border-royal-700 text-royal-700 hover:bg-royal-100 text-[11px] font-medium py-1 rounded-md"
             >
-              <CheckCheck className="w-3.5 h-3.5" aria-hidden="true" /> Batch approve ≥ 85% (
-              {highConfidence})
+              <CheckCheck className="w-3.5 h-3.5" aria-hidden="true" />{' '}
+              {t('docs.review.batch', { n: highConfidence })}
             </button>
           )}
           {batchMsg && <p className="text-[11px] text-royal-900">{batchMsg}</p>}
@@ -136,20 +139,20 @@ export default function ReviewTab({ wellIds }) {
                           {formatEventType(v.type)}
                         </>
                       ) : (
-                        `Top · ${v.formation}`
+                        `${t('docs.review.top')} · ${v.formation}`
                       )}
                     </span>
                     <ConfidenceBadge value={it.confidence} />
                   </div>
                   <p className="text-[10px] text-ink-600 mt-0.5 tabular-nums truncate">
-                    {it.well_id || 'no well'} ·{' '}
+                    {it.well_id || t('docs.review.no_well')} ·{' '}
                     {it.kind === 'event'
                       ? v.depth_from_md != null
                         ? `${v.depth_from_md}–${v.depth_to_md} m`
-                        : 'no depth'
+                        : t('docs.review.no_depth')
                       : `${v.top_md} m`}{' '}
-                    · p.{it.evidence?.page}
-                    {errors > 0 && <span className="text-red-700"> · {errors} issue(s)</span>}
+                    · {t('docs.review.page_short', { page: it.evidence?.page })}
+                    {errors > 0 && <span className="text-red-700"> · {t('docs.review.n_issues', { n: errors })}</span>}
                   </p>
                   <p className="text-[10px] text-ink-600 truncate">{it.filename}</p>
                 </button>
@@ -159,12 +162,12 @@ export default function ReviewTab({ wellIds }) {
           {!loading && items.length === 0 && (
             <li className="p-6 text-center text-xs text-ink-600">
               <ListChecks className="w-8 h-8 mx-auto text-ink-600/30 mb-2" aria-hidden="true" />
-              Nothing {status.replace('_', ' ')}.
+              {t('docs.review.nothing', { status: t(`item_status.${status}`) })}
             </li>
           )}
         </ul>
       </aside>
-      <section className="flex-1 min-w-0" aria-label="Review item">
+      <section className="flex-1 min-w-0" aria-label={t('docs.review.item')}>
         {selected ? (
           <ReviewSplitView
             key={selected}
@@ -173,7 +176,7 @@ export default function ReviewTab({ wellIds }) {
             onResolved={onResolved}
           />
         ) : (
-          <p className="p-8 text-center text-xs text-ink-600">Select an item to review.</p>
+          <p className="p-8 text-center text-xs text-ink-600">{t('docs.review.select')}</p>
         )}
       </section>
     </div>

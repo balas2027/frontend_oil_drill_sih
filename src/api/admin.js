@@ -13,6 +13,10 @@ export const adminApi = {
   metrics: () => apiClient.get('/metrics'),
   sources: () => apiClient.get('/admin/sources'),
   models: () => apiClient.get('/admin/models'),
+  notifications: () => apiClient.get('/admin/notifications'),
+  saveNotifications: (body) => apiClient.put('/admin/notifications', body),
+  testEmail: (to) => apiClient.post('/admin/notifications/test', { to }),
+  emailLog: (limit = 50) => apiClient.get('/admin/notifications/log', { params: { limit } }),
 };
 
 export const learningApi = {

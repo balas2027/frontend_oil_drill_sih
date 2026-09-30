@@ -1,3 +1,4 @@
+import i18n from '../../i18n';
 /**
  * Map mode configuration (Development Guide Section 8B-F).
  * Each mode maps to a base style plus projection / terrain / overlay extras.
@@ -36,12 +37,16 @@ function rasterStyle(id, tiles, attribution, maxzoom = 19) {
 
 export const MAP_MODES = {
   street: {
-    label: 'Street',
+    get label() {
+      return i18n.t('map.modes.street');
+    },
     style: STREET_STYLE,
     pitch: 0,
   },
   satellite: {
-    label: 'Satellite',
+    get label() {
+      return i18n.t('map.modes.satellite');
+    },
     style: rasterStyle(
       'esri-imagery',
       [
@@ -52,7 +57,9 @@ export const MAP_MODES = {
     pitch: 0,
   },
   terrain: {
-    label: 'Terrain',
+    get label() {
+      return i18n.t('map.modes.terrain');
+    },
     style: rasterStyle(
       'opentopomap',
       ['a', 'b', 'c'].map((s) => `https://${s}.tile.opentopomap.org/{z}/{x}/{y}.png`),
@@ -62,7 +69,9 @@ export const MAP_MODES = {
     pitch: 0,
   },
   terrain3d: {
-    label: '3D Terrain',
+    get label() {
+      return i18n.t('map.modes.terrain3d');
+    },
     style: STREET_STYLE,
     pitch: 65,
     // Upper Assam is mostly floodplain - exaggerate and say so on screen
@@ -71,20 +80,26 @@ export const MAP_MODES = {
     requiresWebGL2: true,
   },
   globe: {
-    label: 'Globe',
+    get label() {
+      return i18n.t('map.modes.globe');
+    },
     style: STREET_STYLE,
     pitch: 0,
     projection: 'globe',
     requiresWebGL2: true,
   },
   heatmap: {
-    label: 'Event Heatmap',
+    get label() {
+      return i18n.t('map.modes.heatmap');
+    },
     style: STREET_STYLE,
     pitch: 0,
     overlay: 'eventHeat',
   },
   subsurface: {
-    label: 'Subsurface 3D',
+    get label() {
+      return i18n.t('map.modes.subsurface');
+    },
     // Separate deck.gl OrbitView scene - a surface map cannot show below ground
     view: 'subsurface',
     requiresWebGL2: true,

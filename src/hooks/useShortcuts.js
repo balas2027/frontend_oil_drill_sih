@@ -6,6 +6,7 @@ export const SHORTCUTS = [
   { keys: ['g', 'd'], action: '/dashboard', labelKey: 'shortcuts.go_dashboard' },
   { keys: ['g', 'm'], action: '/map', labelKey: 'shortcuts.go_map' },
   { keys: ['g', 'a'], action: '/alerts', labelKey: 'shortcuts.go_alerts' },
+  { keys: ['g', 'l'], action: '/monitor', labelKey: 'shortcuts.go_monitor' },
   { keys: ['g', 'c'], action: '/correlation', labelKey: 'shortcuts.go_correlation' },
   { keys: ['g', 'o'], action: '/documents', labelKey: 'shortcuts.go_documents' },
   { keys: ['?'], action: 'help', labelKey: 'shortcuts.help' },

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BookOpen, MessageSquare, Search, Mic, MicOff, Send, Sparkles, Gauge } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { knowledgeApi } from '../api/knowledge';
 import { wellsApi } from '../api/wells';
 import { apiErrorMessage } from '../api/client';
@@ -53,6 +54,7 @@ const hitToCitation = (h, i) => ({
 });
 
 function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
+  const { t } = useTranslation();
   const activeWell = useMapStore((s) => s.activeWell);
   const user = useAuthStore((s) => s.user);
   const [wellId, setWellId] = useState(activeWell?.well_id || '');
@@ -63,7 +65,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
   const [error, setError] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const endRef = useRef(null);
-  const speech = useSpeech((t) => setQuestion((q) => (q ? `${q} ${t}` : t)));
+  const speech = useSpeech((txt) => setQuestion((q) => (q ? `${q} ${txt}` : txt)));
 
   useEffect(() => {
     knowledgeApi
@@ -88,11 +90,11 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         well_id: wellId || undefined,
         radius_km: wellId ? radius : undefined,
       });
-      setThread((t) => [...t, res.data]);
+      setThread((th) => [...th, res.data]);
       const first = res.data.citations.find((c) => c.doc_id) || res.data.citations[0];
       if (first) onCite({ ...first, _answer: res.data.answer_id });
     } catch (err) {
-      setError(apiErrorMessage(err, 'The advisor could not answer.'));
+      setError(apiErrorMessage(err, t('kn.ask.error')));
       setQuestion(text);
     } finally {
       setBusy(false);
@@ -102,9 +104,9 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
   return (
     <div className="flex flex-col gap-3 min-h-[600px]">
       <div className="flex flex-wrap items-center gap-2 text-xs bg-royal-50 border border-royal-100 rounded-lg p-2.5">
-        <span className="text-ink-600">Context well</span>
+        <span className="text-ink-600">{t('kn.ask.context_well')}</span>
         <select value={wellId} onChange={(e) => setWellId(e.target.value)} className={inputCls}>
-          <option value="">None (whole field)</option>
+          <option value="">{t('kn.ask.whole_field')}</option>
           {wellIds.map((w) => (
             <option key={w} value={w}>
               {w}
@@ -113,7 +115,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         </select>
         {wellId && (
           <>
-            <span className="text-ink-600">offsets within</span>
+            <span className="text-ink-600">{t('kn.ask.offsets_within')}</span>
             <select
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
@@ -121,14 +123,14 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
             >
               {[5, 10, 20, 50].map((r) => (
                 <option key={r} value={r}>
-                  {r} km
+                  {r} {t('units.km')}
                 </option>
               ))}
             </select>
           </>
         )}
         <span className="text-[10px] text-ink-600">
-          Used when a question says “offset/nearby wells”.
+          {t('kn.ask.context_hint')}
         </span>
       </div>
 
@@ -136,8 +138,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         {thread.length === 0 && (
           <div className="text-center py-8 text-xs text-ink-600">
             <Sparkles className="w-8 h-8 mx-auto text-gold-500 mb-2" aria-hidden="true" />
-            Ask about offset-well history. Answers use only recorded events and reports, and every
-            statement is cited.
+            {t('kn.ask.empty')}
           </div>
         )}
         {thread.map((r) => (
@@ -156,14 +157,14 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         ))}
         {busy && (
           <p className="text-xs text-royal-700 animate-pulse">
-            Searching records and checking citations…
+            {t('kn.ask.busy')}
           </p>
         )}
         <div ref={endRef} />
       </div>
 
       {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-1.5" aria-label="Suggested questions">
+        <div className="flex flex-wrap gap-1.5" aria-label={t('kn.ask.suggested')}>
           {suggestions.map((s) => (
             <button
               key={s}
@@ -189,7 +190,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
         className="flex items-end gap-2"
       >
         <label className="flex-1">
-          <span className="sr-only">Question</span>
+          <span className="sr-only">{t('kn.ask.question')}</span>
           <textarea
             rows={2}
             value={question}
@@ -200,7 +201,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
                 ask();
               }
             }}
-            placeholder="e.g. What mud losses occurred near 2,400 m in the Namsang within 10 km, and how were they handled?"
+            placeholder={t('kn.ask.placeholder')}
             className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:ring-2 focus:ring-royal-600 focus:outline-none resize-none"
           />
         </label>
@@ -209,8 +210,8 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
             type="button"
             onClick={speech.listening ? speech.stop : speech.start}
             className={`p-2.5 rounded-lg border ${speech.listening ? 'bg-red-50 border-red-300 text-red-700 animate-pulse' : 'border-line text-royal-700 hover:bg-royal-50'}`}
-            aria-label={speech.listening ? 'Stop voice input' : 'Ask by voice'}
-            title="Voice input (browser speech recognition)"
+            aria-label={speech.listening ? t('kn.ask.voice_stop') : t('kn.ask.voice')}
+            title={t('kn.ask.voice_title')}
           >
             {speech.listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
@@ -220,7 +221,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
           disabled={busy || question.trim().length < 3}
           className="flex items-center gap-1 bg-royal-700 hover:bg-royal-900 text-white text-sm font-medium px-4 py-2.5 rounded-lg disabled:opacity-50"
         >
-          <Send className="w-4 h-4" aria-hidden="true" /> Ask
+          <Send className="w-4 h-4" aria-hidden="true" /> {t('kn.ask.ask')}
         </button>
       </form>
     </div>
@@ -228,6 +229,7 @@ function AskPanel({ wellIds, onCite, activeCitation, onSaveLesson }) {
 }
 
 function SearchPanel({ options, wellIds, onCite, activeCitation }) {
+  const { t } = useTranslation();
   const activeWell = useMapStore((s) => s.activeWell);
   const [query, setQuery] = useState('');
   const [f, setF] = useState({
@@ -263,7 +265,7 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
       });
       setResult(res.data);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Search failed.'));
+      setError(apiErrorMessage(err, t('kn.search.error')));
     } finally {
       setBusy(false);
     }
@@ -276,12 +278,12 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
       <form onSubmit={run} className="space-y-2">
         <div className="flex gap-2">
           <label className="relative flex-1">
-            <span className="sr-only">Search the knowledge base</span>
+            <span className="sr-only">{t('kn.search.aria')}</span>
             <Search className="w-4 h-4 text-ink-600 absolute left-2.5 top-2.5" aria-hidden="true" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. lost circulation cured with LCM pill"
+              placeholder={t('kn.search.placeholder')}
               className="w-full text-sm border border-line rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-royal-600 focus:outline-none"
             />
           </label>
@@ -290,28 +292,28 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
             disabled={busy}
             className="bg-royal-700 hover:bg-royal-900 text-white text-sm px-4 rounded-lg disabled:opacity-50"
           >
-            Search
+            {t('kn.search.search')}
           </button>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <select
-            aria-label="Formation"
+            aria-label={t('map.filters.formation')}
             className={inputCls}
             value={f.formation}
             onChange={set('formation')}
           >
-            <option value="">Any formation</option>
+            <option value="">{t('explorer.any_formation')}</option>
             {options.formations?.map((x) => (
               <option key={x}>{x}</option>
             ))}
           </select>
           <select
-            aria-label="Event type"
+            aria-label={t('kn.search.event_type')}
             className={`${inputCls} capitalize`}
             value={f.event_type}
             onChange={set('event_type')}
           >
-            <option value="">Any event type</option>
+            <option value="">{t('kn.search.any_event_type')}</option>
             {options.event_types?.map((x) => (
               <option key={x} value={x}>
                 {formatEventType(x)}
@@ -319,39 +321,39 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
             ))}
           </select>
           <input
-            aria-label="Depth from"
+            aria-label={t('explorer.depth_from')}
             type="number"
-            placeholder="From m"
+            placeholder={t('explorer.from_m')}
             className={`${inputCls} w-24`}
             value={f.depth_from}
             onChange={set('depth_from')}
           />
           <input
-            aria-label="Depth to"
+            aria-label={t('explorer.depth_to')}
             type="number"
-            placeholder="To m"
+            placeholder={t('explorer.to_m')}
             className={`${inputCls} w-24`}
             value={f.depth_to}
             onChange={set('depth_to')}
           />
           <select
-            aria-label="Source kind"
+            aria-label={t('kn.search.source_kind')}
             className={inputCls}
             value={f.kind}
             onChange={set('kind')}
           >
-            <option value="">Reports + events</option>
-            <option value="document">Reports only</option>
-            <option value="event">Event records only</option>
+            <option value="">{t('kn.search.both')}</option>
+            <option value="document">{t('kn.search.reports')}</option>
+            <option value="event">{t('kn.search.events')}</option>
           </select>
           <select
-            aria-label="Well scope"
+            aria-label={t('kn.search.well_scope')}
             className={inputCls}
             value={f.well_id}
             onChange={set('well_id')}
           >
-            <option value="">All wells</option>
-            {activeWell && <option value={activeWell.well_id}>Active: {activeWell.well_id}</option>}
+            <option value="">{t('explorer.all_wells')}</option>
+            {activeWell && <option value={activeWell.well_id}>{t('kn.search.active', { well: activeWell.well_id })}</option>}
             {wellIds.map((w) => (
               <option key={w} value={w}>
                 {w}
@@ -360,15 +362,15 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
           </select>
           {f.well_id && (
             <select
-              aria-label="Radius"
+              aria-label={t('kn.search.radius')}
               className={inputCls}
               value={f.radius_km}
               onChange={set('radius_km')}
             >
-              <option value="">This well only</option>
+              <option value="">{t('kn.search.this_well')}</option>
               {[5, 10, 20].map((r) => (
                 <option key={r} value={r}>
-                  + offsets within {r} km
+                  {t('kn.search.plus_offsets', { r })}
                 </option>
               ))}
             </select>
@@ -380,8 +382,12 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
       )}
       {result && (
         <p className="text-[11px] text-ink-600 tabular-nums">
-          {result.results.length} result(s) from {result.candidates} indexed chunk(s) after filters
-          · {result.took_ms} ms · {result.embedding_model} + keyword index
+          {t('kn.search.summary', {
+            n: result.results.length,
+            candidates: result.candidates,
+            ms: result.took_ms,
+            model: result.embedding_model,
+          })}
         </p>
       )}
       <ul className="space-y-2" aria-busy={busy}>
@@ -409,7 +415,7 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
                       </>
                     ) : (
                       <>
-                        {h.filename} · p.{h.page}
+                        {h.filename} · {t('docs.review.page_short', { page: h.page })}
                       </>
                     )}
                   </span>
@@ -434,6 +440,7 @@ function SearchPanel({ options, wellIds, onCite, activeCitation }) {
 }
 
 function BenchmarkBadge() {
+  const { t } = useTranslation();
   const [m, setM] = useState(null);
   useEffect(() => {
     knowledgeApi
@@ -449,13 +456,17 @@ function BenchmarkBadge() {
       title="scripts/evaluate_advisor.py"
     >
       <Gauge className="w-3.5 h-3.5 text-royal-700" aria-hidden="true" />
-      Benchmark: {b.passed}/{b.questions} questions with correct citations · citation precision{' '}
-      {b.mean_event_citation_precision}
+      {t('kn.benchmark', {
+        passed: b.passed,
+        total: b.questions,
+        precision: b.mean_event_citation_precision,
+      })}
     </span>
   );
 }
 
 export default function Knowledge() {
+  const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') === 'search' ? 'search' : 'ask';
   const [citation, setCitation] = useState(null);
@@ -478,23 +489,22 @@ export default function Knowledge() {
       <div className="bg-white p-5 rounded-xl border border-line shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <span className="text-xs uppercase font-bold tracking-wider text-royal-700 flex items-center gap-1">
-            <BookOpen className="w-3.5 h-3.5" aria-hidden="true" /> Knowledge repository
+            <BookOpen className="w-3.5 h-3.5" aria-hidden="true" /> {t('kn.kicker')}
           </span>
-          <h2 className="text-xl font-bold text-royal-900 font-serif">Ask NWIS</h2>
+          <h2 className="text-xl font-bold text-royal-900 font-serif">{t('kn.title')}</h2>
           <p className="text-xs text-ink-600 mt-1">
-            Questions are answered only from recorded events and uploaded reports - click a citation
-            to see the page.
+            {t('kn.subtitle')}
           </p>
           <BenchmarkBadge />
         </div>
         <div
           role="tablist"
-          aria-label="Knowledge view"
+          aria-label={t('kn.view')}
           className="flex bg-royal-50 border border-line rounded-lg p-1 gap-1"
         >
           {[
-            ['ask', 'Ask NWIS', MessageSquare],
-            ['search', 'Search', Search],
+            ['ask', t('kn.title'), MessageSquare],
+            ['search', t('kn.search.search'), Search],
           ].map(([k, label, Icon]) => (
             <button
               key={k}
@@ -515,7 +525,7 @@ export default function Knowledge() {
 
       {saved && (
         <p className="p-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg">
-          Lesson “{saved.title}” saved to the Lessons library.
+          {t('kn.lesson_saved', { title: saved.title })}
         </p>
       )}
 
@@ -545,8 +555,7 @@ export default function Knowledge() {
             <CitationViewer citation={citation} onClose={() => setCitation(null)} />
           ) : (
             <div className="bg-white rounded-xl border border-dashed border-line p-6 text-center text-xs text-ink-600 min-h-[300px] flex items-center justify-center">
-              Click a citation or a search result to open the source page with the evidence
-              highlighted.
+              {t('kn.viewer_hint')}
             </div>
           )}
         </div>

@@ -1,8 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import mlcontour from 'maplibre-contour';
+import i18n from '../../i18n';
 import { MAP_MODES, DEM_SOURCE, LABEL_FONT } from './mapModes';
-import { EVENT_DENSITY_STOPS } from './eventStyles';
+import { EVENT_DENSITY_STOPS, formatStatusWord } from './eventStyles';
+import { buildArcs, buildBoundaries, buildHexbins, buildRings } from './mapOverlays';
 
 const FIELD_CENTER = [95.3, 27.35];
 const INDIA_CENTER = [82.8, 22.5];
@@ -15,6 +18,12 @@ const SRC = {
   active: 'nwis-active',
   heat: 'nwis-event-heat',
   trajectories: 'nwis-trajectories',
+  rings: 'nwis-rings',
+  ringLabels: 'nwis-ring-labels',
+  arcs: 'nwis-arcs',
+  hex: 'nwis-hexbins',
+  boundaries: 'nwis-boundaries',
+  contours: 'nwis-contours',
   demTerrain: 'nwis-dem-terrain',
   demHillshade: 'nwis-dem-hillshade',
 };
@@ -25,6 +34,18 @@ const LYR = {
   radiusFill: 'nwis-radius-fill',
   radiusLine: 'nwis-radius-line',
   trajectories: 'nwis-trajectories-line',
+  boundaryFill: 'nwis-boundary-fill',
+  boundaryLine: 'nwis-boundary-line',
+  boundaryLabel: 'nwis-boundary-label',
+  hexFill: 'nwis-hex-fill',
+  hexLine: 'nwis-hex-line',
+  contourLine: 'nwis-contour-line',
+  contourLabel: 'nwis-contour-label',
+  arcs: 'nwis-arcs-line',
+  rings: 'nwis-rings-line',
+  ringLabels: 'nwis-rings-label',
+  clusters: 'nwis-clusters',
+  clusterCount: 'nwis-cluster-count',
   allWells: 'nwis-all-wells-circle',
   nearby: 'nwis-nearby-circle',
   highlight: 'nwis-nearby-highlight',
@@ -56,6 +77,50 @@ function ensureLayer(map, layer, beforeId) {
 }
 
 const visibility = (on) => (on ? 'visible' : 'none');
+
+function setVisible(map, ids, on) {
+  for (const id of ids) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visibility(on));
+}
+
+// Contour lines are generated in the browser from the same free Terrarium DEM tiles
+// (maplibre-contour); the protocol is registered once per page load.
+let demSource = null;
+function contourTileUrl() {
+  if (!demSource) {
+    demSource = new mlcontour.DemSource({
+      url: DEM_SOURCE.tiles[0],
+      encoding: 'terrarium',
+      maxzoom: 13,
+      worker: true,
+    });
+    demSource.setupMaplibre(maplibregl);
+  }
+  return demSource.contourProtocolUrl({
+    thresholds: { 10: [50, 250], 12: [10, 50], 14: [5, 25] }, // [minor, major] metres per zoom
+    elevationKey: 'ele',
+    levelKey: 'level',
+    contourLayer: 'contours',
+  });
+}
+
+/** Other wells: a clustered source when clustering is on (recreated on toggle). */
+function syncWellsSource(map, data, clustered) {
+  const src = map.getSource(SRC.allWells);
+  if (src && map.__nwisClustered === clustered) {
+    src.setData(data);
+    return;
+  }
+  for (const id of [LYR.clusterCount, LYR.clusters, LYR.allWells]) {
+    if (map.getLayer(id)) map.removeLayer(id);
+  }
+  if (src) map.removeSource(SRC.allWells);
+  map.addSource(SRC.allWells, {
+    type: 'geojson',
+    data,
+    ...(clustered ? { cluster: true, clusterRadius: 40, clusterMaxZoom: 11 } : {}),
+  });
+  map.__nwisClustered = clustered;
+}
 
 /** Terrain, hillshade, projection and sky for the current mode. */
 function applyModeExtras(map, modeKey, layers) {
@@ -101,14 +166,31 @@ function syncData(map, p) {
   const nearbyIds = new Set(p.nearbyWells.map((r) => r.well.well_id));
 
   setData(map, SRC.radius, p.layers.radius && p.radiusCircle ? p.radiusCircle : EMPTY_FC);
-  setData(map, SRC.allWells, {
-    type: 'FeatureCollection',
-    features: p.allWells
-      .filter((w) => w.location?.coordinates && w.well_id !== activeId && !nearbyIds.has(w.well_id))
-      .map((w) =>
-        point(w.location.coordinates, { well_id: w.well_id, name: w.name, status: w.status })
-      ),
-  });
+  syncWellsSource(
+    map,
+    {
+      type: 'FeatureCollection',
+      features: p.allWells
+        .filter(
+          (w) => w.location?.coordinates && w.well_id !== activeId && !nearbyIds.has(w.well_id)
+        )
+        .map((w) =>
+          point(w.location.coordinates, { well_id: w.well_id, name: w.name, status: w.status })
+        ),
+    },
+    Boolean(p.layers.clusters)
+  );
+
+  const center = p.activeWell?.location?.coordinates;
+  const rings = p.layers.rings ? buildRings(center) : { rings: EMPTY_FC, labels: EMPTY_FC };
+  setData(map, SRC.rings, rings.rings);
+  setData(map, SRC.ringLabels, rings.labels);
+  setData(map, SRC.arcs, p.layers.arcs ? buildArcs(center, p.nearbyWells) : EMPTY_FC);
+  setData(map, SRC.hex, p.layers.hexbins && p.heatmapData ? buildHexbins(p.heatmapData) : EMPTY_FC);
+  setData(map, SRC.boundaries, p.layers.boundaries ? buildBoundaries(p.allWells) : EMPTY_FC);
+  if (p.layers.contours && !map.getSource(SRC.contours)) {
+    map.addSource(SRC.contours, { type: 'vector', tiles: [contourTileUrl()], maxzoom: 15 });
+  }
   setData(map, SRC.nearby, {
     type: 'FeatureCollection',
     features: p.nearbyWells
@@ -177,6 +259,73 @@ function syncData(map, p) {
     },
   });
   ensureLayer(map, {
+    id: LYR.boundaryFill,
+    type: 'fill',
+    source: SRC.boundaries,
+    paint: { 'fill-color': '#C9A227', 'fill-opacity': 0.05 },
+  });
+  ensureLayer(map, {
+    id: LYR.boundaryLine,
+    type: 'line',
+    source: SRC.boundaries,
+    paint: { 'line-color': '#C9A227', 'line-width': 2, 'line-dasharray': [6, 3] },
+  });
+  ensureLayer(map, {
+    id: LYR.hexFill,
+    type: 'fill',
+    source: SRC.hex,
+    paint: {
+      // Severity-weighted event density per 2 km cell (low -> high, with legend)
+      'fill-color': [
+        'interpolate',
+        ['linear'],
+        ['get', 'weight'],
+        1,
+        '#FBF3D6',
+        4,
+        '#E0A100',
+        10,
+        '#E8871E',
+        20,
+        '#C62D3B',
+      ],
+      'fill-opacity': 0.55,
+    },
+  });
+  ensureLayer(map, {
+    id: LYR.hexLine,
+    type: 'line',
+    source: SRC.hex,
+    paint: { 'line-color': '#FFFFFF', 'line-width': 0.8, 'line-opacity': 0.8 },
+  });
+  if (map.getSource(SRC.contours)) {
+    ensureLayer(map, {
+      id: LYR.contourLine,
+      type: 'line',
+      source: SRC.contours,
+      'source-layer': 'contours',
+      paint: {
+        'line-color': '#7A5F0F',
+        'line-opacity': 0.55,
+        'line-width': ['match', ['get', 'level'], 1, 1.4, 0.6],
+      },
+    });
+    ensureLayer(map, {
+      id: LYR.contourLabel,
+      type: 'symbol',
+      source: SRC.contours,
+      'source-layer': 'contours',
+      filter: ['>', ['get', 'level'], 0],
+      layout: {
+        'symbol-placement': 'line',
+        'text-field': ['concat', ['number-format', ['get', 'ele'], {}], ' m'],
+        'text-font': LABEL_FONT,
+        'text-size': 10,
+      },
+      paint: { 'text-color': '#6B5310', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.2 },
+    });
+  }
+  ensureLayer(map, {
     id: LYR.radiusFill,
     type: 'fill',
     source: SRC.radius,
@@ -206,17 +355,78 @@ function syncData(map, p) {
     },
   });
   ensureLayer(map, {
-    id: LYR.allWells,
-    type: 'circle',
-    source: SRC.allWells,
+    id: LYR.arcs,
+    type: 'line',
+    source: SRC.arcs,
+    layout: { 'line-cap': 'round' },
     paint: {
+      // Active well -> offset well; width and opacity follow similarity
+      'line-color': '#C9A227',
+      'line-width': ['interpolate', ['linear'], ['get', 'similarity'], 0, 1, 1, 6],
+      'line-opacity': ['interpolate', ['linear'], ['get', 'similarity'], 0, 0.35, 1, 0.9],
+    },
+  });
+  ensureLayer(map, {
+    id: LYR.rings,
+    type: 'line',
+    source: SRC.rings,
+    paint: {
+      'line-color': '#0A2A66',
+      'line-width': 1.2,
+      'line-dasharray': [2, 2],
+      'line-opacity': 0.7,
+    },
+  });
+  ensureLayer(
+    map,
+    {
+      id: LYR.clusters,
+      type: 'circle',
+      source: SRC.allWells,
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': '#64748B',
+        'circle-opacity': 0.85,
+        'circle-radius': ['step', ['get', 'point_count'], 12, 5, 16, 10, 20],
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 2,
+      },
+    },
+    LYR.highlight
+  );
+  ensureLayer(
+    map,
+    {
+      id: LYR.clusterCount,
+      type: 'symbol',
+      source: SRC.allWells,
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['get', 'point_count_abbreviated'],
+        'text-font': LABEL_FONT,
+        'text-size': 11,
+      },
+      paint: { 'text-color': '#FFFFFF' },
+    },
+    LYR.highlight
+  );
+  ensureLayer(
+    map,
+    {
+      id: LYR.allWells,
+      type: 'circle',
+      source: SRC.allWells,
+      filter: ['!', ['has', 'point_count']],
+      paint: {
       'circle-radius': 4.5,
       'circle-color': '#94A3B8',
       'circle-stroke-color': '#FFFFFF',
       'circle-stroke-width': 1.5,
       'circle-pitch-alignment': 'map',
     },
-  });
+    },
+    LYR.highlight
+  );
   ensureLayer(map, {
     id: LYR.highlight,
     type: 'circle',
@@ -269,11 +479,31 @@ function syncData(map, p) {
     },
     paint: { 'text-color': '#0A2A66', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
   });
+  ensureLayer(map, {
+    id: LYR.ringLabels,
+    type: 'symbol',
+    source: SRC.ringLabels,
+    layout: { 'text-field': ['get', 'label'], 'text-font': LABEL_FONT, 'text-size': 10 },
+    paint: { 'text-color': '#0A2A66', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
+  });
+  ensureLayer(map, {
+    id: LYR.boundaryLabel,
+    type: 'symbol',
+    source: SRC.boundaries,
+    layout: {
+      'text-field': ['concat', ['get', 'name'], ' ', i18n.t('map.overlays.derived')],
+      'text-font': LABEL_FONT,
+      'text-size': 11,
+      'symbol-placement': 'line',
+    },
+    paint: { 'text-color': '#7A5F0F', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
+  });
 
   const highlighted = [p.selectedWellId, p.hoveredWellId].filter(Boolean);
   map.setFilter(LYR.highlight, ['in', ['get', 'well_id'], ['literal', highlighted]]);
   map.setLayoutProperty(LYR.labels, 'visibility', visibility(p.layers.labels));
-  map.setLayoutProperty(LYR.allWells, 'visibility', visibility(p.layers.allWells));
+  setVisible(map, [LYR.allWells, LYR.clusters, LYR.clusterCount], p.layers.allWells);
+  setVisible(map, [LYR.contourLine, LYR.contourLabel], p.layers.contours);
   if (map.getLayer(LYR.hillshade)) {
     map.setLayoutProperty(LYR.hillshade, 'visibility', visibility(p.layers.hillshade));
   }
@@ -283,8 +513,8 @@ function starElement(title) {
   const el = document.createElement('div');
   el.className = 'nwis-active-marker';
   el.setAttribute('role', 'img');
-  el.setAttribute('aria-label', `Active well ${title}`);
-  el.title = `Active well: ${title}`;
+  el.setAttribute('aria-label', i18n.t('map.active_marker', { name: title }));
+  el.title = i18n.t('map.active_marker', { name: title });
   el.innerHTML =
     '<svg viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
   return el;
@@ -294,6 +524,10 @@ function starElement(title) {
  * MapLibre map of wells around the active well.
  * Props are mirrored into a ref so style reloads (mode switches) can re-add
  * every NWIS source/layer from the latest state in the 'style.load' handler.
+ *
+ * MapLibre GL v6 fires 'style.load' before the style is fully initialised,
+ * so we also schedule a follow-up sync on the first 'idle' event after each
+ * style swap to guarantee overlays appear.
  */
 export default function WellMap(props) {
   const containerRef = useRef(null);
@@ -303,6 +537,8 @@ export default function WellMap(props) {
   const markerRef = useRef(null);
   const popupRef = useRef(null);
   const modeRef = useRef(props.mapMode);
+  // Incremented on every style change so stale idle callbacks are ignored
+  const styleGenRef = useRef(0);
   propsRef.current = props;
 
   // Create the map once
@@ -322,11 +558,46 @@ export default function WellMap(props) {
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-left');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 
+    /**
+     * Safely apply all NWIS overlays. Wrapped in try/catch because MapLibre
+     * may throw when the style isn't fully parsed yet (e.g. glyph stack
+     * not available). In that case the idle fallback will retry.
+     */
+    const safeSync = (gen) => {
+      try {
+        const p = propsRef.current;
+        applyModeExtras(map, modeRef.current, p.layers);
+        syncData(map, p);
+      } catch (err) {
+        console.warn('[WellMap] syncData deferred:', err.message || err);
+        // Schedule a retry on the next idle if we haven't moved on to a newer style
+        scheduleIdleSync(gen);
+      }
+    };
+
+    /**
+     * Register a one-shot 'idle' listener that re-syncs overlays.
+     * Stale callbacks (from a previous style generation) are skipped.
+     */
+    const scheduleIdleSync = (gen) => {
+      map.once('idle', () => {
+        if (gen !== styleGenRef.current) return; // style changed again
+        try {
+          const p = propsRef.current;
+          applyModeExtras(map, modeRef.current, p.layers);
+          syncData(map, p);
+        } catch (err) {
+          console.warn('[WellMap] idle sync failed:', err.message || err);
+        }
+      });
+    };
+
     map.on('style.load', () => {
       readyRef.current = true;
-      const p = propsRef.current;
-      applyModeExtras(map, modeRef.current, p.layers);
-      syncData(map, p);
+      const gen = styleGenRef.current;
+      safeSync(gen);
+      // Safety net: re-sync after the map has fully settled
+      scheduleIdleSync(gen);
     });
 
     map.on('error', (e) => {
@@ -349,13 +620,14 @@ export default function WellMap(props) {
       el.className = 'text-xs space-y-1';
       el.innerHTML = `<div class="font-bold text-royal-900"></div>
         <div class="text-[10px] text-ink-600 capitalize"></div>
-        <div class="text-[10px] text-ink-600">Outside radius / filters</div>`;
+        <div class="text-[10px] text-ink-600"></div>`;
       el.children[0].textContent = name;
-      el.children[1].textContent = `${id} • ${status}`;
+      el.children[1].textContent = `${id} • ${formatStatusWord(status)}`;
+      el.children[2].textContent = i18n.t('map.popup.outside');
       const btn = document.createElement('button');
       btn.className =
         'mt-1 w-full bg-royal-700 hover:bg-royal-900 text-white text-[10px] font-medium px-2 py-1 rounded';
-      btn.textContent = 'Set as active well';
+      btn.textContent = i18n.t('map.popup.set_active');
       btn.onclick = () => {
         popupRef.current?.remove();
         propsRef.current.onMakeActive?.(id);
@@ -368,7 +640,16 @@ export default function WellMap(props) {
         .addTo(map);
     });
 
-    for (const layer of [LYR.nearby, LYR.allWells]) {
+    map.on('click', LYR.clusters, async (e) => {
+      const f = e.features?.[0];
+      if (!f) return;
+      const zoom = await map
+        .getSource(SRC.allWells)
+        .getClusterExpansionZoom(f.properties.cluster_id);
+      map.easeTo({ center: f.geometry.coordinates, zoom, duration: 600 });
+    });
+
+    for (const layer of [LYR.nearby, LYR.allWells, LYR.clusters]) {
       map.on('mouseenter', layer, (e) => {
         map.getCanvas().style.cursor = 'pointer';
         if (layer === LYR.nearby) propsRef.current.onHoverWell?.(pickWell(e));
@@ -401,6 +682,7 @@ export default function WellMap(props) {
     const mode = MAP_MODES[props.mapMode];
 
     readyRef.current = false;
+    styleGenRef.current += 1;
     map.setStyle(mode.style, { diff: false });
     map.easeTo({
       pitch: mode.pitch || 0,
@@ -421,7 +703,12 @@ export default function WellMap(props) {
   // Data / toggle changes
   useEffect(() => {
     const map = mapRef.current;
-    if (map && readyRef.current) syncData(map, props);
+    if (!map || !readyRef.current) return;
+    try {
+      syncData(map, props);
+    } catch (err) {
+      console.warn('[WellMap] data sync error:', err.message || err);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on specific props; others read via propsRef
   }, [
     props.allWells,
@@ -478,7 +765,8 @@ export default function WellMap(props) {
   // MapLibre forces `position: relative` on its container, so size it from a wrapper
   return (
     <div className="absolute inset-0">
-      <div ref={containerRef} className="w-full h-full" aria-label="Well map" role="region" />
+      <div ref={containerRef} className="w-full h-full" aria-label={i18n.t('map.aria')} role="region" />
     </div>
   );
 }
+

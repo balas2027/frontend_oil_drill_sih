@@ -1,13 +1,17 @@
-/** Pure helpers for the Risk & Alerts page (no DOM). Mirrors the backend risk engine. */
+/** Pure helpers for the Risk & Alerts page (no DOM). Mirrors the backend risk engine.
+ * Labels are getters so they always follow the current UI language. */
+import i18n from '../../i18n';
+
+const tr = (key) => i18n.t(key);
 
 /** Risk types in display order, with a one-letter code so cells never rely on colour alone. */
 export const RISK_TYPES = [
-  { key: 'mud_loss', label: 'Mud loss', code: 'L' },
-  { key: 'kick', label: 'Kick / overpressure', code: 'K' },
-  { key: 'stuck_pipe', label: 'Stuck pipe', code: 'S' },
-  { key: 'torque_spike', label: 'Torque spike', code: 'T' },
-  { key: 'wellbore_instability', label: 'Wellbore instability', code: 'W' },
-  { key: 'cementing_issue', label: 'Cementing issue', code: 'C' },
+  { key: 'mud_loss', code: 'L', get label() { return tr('risk_types.mud_loss'); } },
+  { key: 'kick', code: 'K', get label() { return tr('risk_types.kick'); } },
+  { key: 'stuck_pipe', code: 'S', get label() { return tr('risk_types.stuck_pipe'); } },
+  { key: 'torque_spike', code: 'T', get label() { return tr('risk_types.torque_spike'); } },
+  { key: 'wellbore_instability', code: 'W', get label() { return tr('risk_types.wellbore_instability'); } },
+  { key: 'cementing_issue', code: 'C', get label() { return tr('risk_types.cementing_issue'); } },
 ];
 
 export const riskLabel = (key) => RISK_TYPES.find((t) => t.key === key)?.label || key;
@@ -17,14 +21,16 @@ export const RISK_LEVELS = [
   {
     key: 'critical',
     min: 0.75,
-    label: 'Critical',
+    get label() {
+      return tr('risk_levels.critical');
+    },
     color: '#C62D3B',
     bg: '#FDECEE',
     icon: 'octagon',
   },
-  { key: 'high', min: 0.5, label: 'High', color: '#E8871E', bg: '#FDF1E4', icon: 'triangle' },
-  { key: 'watch', min: 0.3, label: 'Watch', color: '#E0A100', bg: '#FBF3D6', icon: 'eye' },
-  { key: 'low', min: 0, label: 'Low', color: '#1E8E5A', bg: '#E7F5EE', icon: 'check' },
+  { key: 'high', get label() { return tr('risk_levels.high'); }, min: 0.5, color: '#E8871E', bg: '#FDF1E4', icon: 'triangle' },
+  { key: 'watch', get label() { return tr('risk_levels.watch'); }, min: 0.3, color: '#E0A100', bg: '#FBF3D6', icon: 'eye' },
+  { key: 'low', get label() { return tr('risk_levels.low'); }, min: 0, color: '#1E8E5A', bg: '#E7F5EE', icon: 'check' },
 ];
 
 export function levelFor(p) {
@@ -33,25 +39,25 @@ export function levelFor(p) {
 
 /** Alert levels (Section 4 alerts.level), lowest first. */
 export const ALERT_LEVELS = {
-  info: { rank: 0, label: 'Info', color: '#1D4FB8', bg: '#E6EEFB' },
-  watch: { rank: 1, label: 'Watch', color: '#E0A100', bg: '#FBF3D6' },
-  warning: { rank: 2, label: 'Warning', color: '#E8871E', bg: '#FDF1E4' },
-  critical: { rank: 3, label: 'Critical', color: '#C62D3B', bg: '#FDECEE' },
+  info: { rank: 0, get label() { return tr('alert_levels.info'); }, color: '#1D4FB8', bg: '#E6EEFB' },
+  watch: { rank: 1, get label() { return tr('alert_levels.watch'); }, color: '#E0A100', bg: '#FBF3D6' },
+  warning: { rank: 2, get label() { return tr('alert_levels.warning'); }, color: '#E8871E', bg: '#FDF1E4' },
+  critical: { rank: 3, get label() { return tr('alert_levels.critical'); }, color: '#C62D3B', bg: '#FDECEE' },
 };
 
 export const alertLevel = (key) => ALERT_LEVELS[key] || ALERT_LEVELS.info;
 
 export const ALERT_STATUS_LABELS = {
-  open: 'Open',
-  ack: 'Acknowledged',
-  resolved: 'Resolved',
-  dismissed: 'Dismissed',
+  get open() { return tr('risk.alert_status.open'); },
+  get ack() { return tr('risk.alert_status.ack'); },
+  get resolved() { return tr('risk.alert_status.resolved'); },
+  get dismissed() { return tr('risk.alert_status.dismissed'); },
 };
 
 export const RULE_LABELS = {
-  offset_lookahead: 'Offset look-ahead',
-  fused_risk: 'Fused risk model',
-  live_anomaly: 'Live anomaly + offset history',
+  get offset_lookahead() { return tr('risk.rules.offset_lookahead'); },
+  get fused_risk() { return tr('risk.rules.fused_risk'); },
+  get live_anomaly() { return tr('risk.rules.live_anomaly'); },
 };
 
 export const fmtPct = (p) => (p == null ? '—' : `${Math.round(p * 100)}%`);
@@ -81,23 +87,27 @@ export function backoffDelay(attempt, { base = 1000, max = 30000, jitter = 0 } =
 
 /** Derived live series for the mini charts. */
 export const PARAM_SERIES = [
-  { key: 'torque', label: 'Torque', unit: 'kN·m', color: '#7C3AED', value: (r) => r.torque },
-  { key: 'spp', label: 'SPP', unit: 'psi', color: '#0A2A66', value: (r) => r.spp },
+  { key: 'torque', get label() { return tr('params.torque'); }, unit: 'kN·m', color: '#7C3AED', value: (r) => r.torque },
+  { key: 'spp', get label() { return tr('params.spp'); }, unit: 'psi', color: '#0A2A66', value: (r) => r.spp },
   {
     key: 'flow_delta',
-    label: 'Flow out − in',
+    get label() {
+      return tr('params.flow_delta');
+    },
     unit: 'gpm',
     color: '#E8871E',
     value: (r) => (r.flow_out != null && r.flow_in != null ? r.flow_out - r.flow_in : null),
   },
   {
     key: 'pit_volume',
-    label: 'Pit volume',
+    get label() {
+      return tr('params.pit_volume');
+    },
     unit: 'bbl',
     color: '#C62D3B',
     value: (r) => r.pit_volume,
   },
-  { key: 'gas_units', label: 'Gas', unit: 'units', color: '#C9A227', value: (r) => r.gas_units },
+  { key: 'gas_units', get label() { return tr('params.gas_units'); }, unit: 'units', color: '#C9A227', value: (r) => r.gas_units },
 ];
 
 /** Polyline points (viewBox 0..100 x 0..h) for a series against depth. */

@@ -1,19 +1,21 @@
+import i18n from '../../i18n';
 import { Check, Loader2, X, Circle } from 'lucide-react';
 import { PIPELINE_STEPS } from '../../api/documents';
 
 const STEP_STYLE = {
-  done: { icon: Check, cls: 'bg-emerald-600 text-white border-emerald-600', label: 'done' },
-  running: { icon: Loader2, cls: 'bg-gold-100 text-[#6B5310] border-gold-500', label: 'running' },
-  failed: { icon: X, cls: 'bg-red-600 text-white border-red-600', label: 'failed' },
-  pending: { icon: Circle, cls: 'bg-white text-ink-600/40 border-line', label: 'pending' },
+  done: { icon: Check, cls: 'bg-emerald-600 text-white border-emerald-600', get label() { return i18n.t('pipeline.done'); } },
+  running: { icon: Loader2, cls: 'bg-gold-100 text-[#6B5310] border-gold-500', get label() { return i18n.t('pipeline.running'); } },
+  failed: { icon: X, cls: 'bg-red-600 text-white border-red-600', get label() { return i18n.t('pipeline.failed'); } },
+  pending: { icon: Circle, cls: 'bg-white text-ink-600/40 border-line', get label() { return i18n.t('pipeline.pending'); } },
 };
 
 /** OCR -> Extraction -> Normalise -> Validate -> Index progress (Section 10.8). */
 export function PipelineStepper({ steps, compact = false }) {
   const byAgent = Object.fromEntries((steps || []).map((s) => [s.agent, s]));
   return (
-    <ol className="flex items-center gap-0.5" aria-label="Processing pipeline">
-      {PIPELINE_STEPS.map(({ agent, label }, i) => {
+    <ol className="flex items-center gap-0.5" aria-label={i18n.t('pipeline.aria')}>
+      {PIPELINE_STEPS.map(({ agent }, i) => {
+        const label = i18n.t(`pipeline.${agent}`);
         const status = byAgent[agent]?.status || 'pending';
         const st = STEP_STYLE[status] || STEP_STYLE.pending;
         const Icon = st.icon;
@@ -50,7 +52,7 @@ const DOC_STATUS = {
 };
 
 export function DocStatusChip({ status }) {
-  const label = status === 'review' ? 'needs review' : status;
+  const label = i18n.t(`doc_status.${status}`, { defaultValue: status });
   return (
     <span
       className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold capitalize ${DOC_STATUS[status] || DOC_STATUS.queued}`}
@@ -72,7 +74,7 @@ export function ItemStatusChip({ status }) {
     <span
       className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${ITEM_STATUS[status] || ''}`}
     >
-      {(status || '').replace('_', ' ')}
+      {i18n.t(`item_status.${status}`, { defaultValue: (status || '').replace('_', ' ') })}
     </span>
   );
 }
@@ -90,9 +92,9 @@ export function ConfidenceBadge({ value }) {
   return (
     <span
       className={`px-1.5 py-0.5 rounded border text-[10px] font-bold tabular-nums ${cls}`}
-      title={`${word} confidence`}
+      title={i18n.t('confidence.label', { level: i18n.t(`confidence.${word}`) })}
     >
-      {pct}% {word}
+      {pct}% {i18n.t(`confidence.${word}`)}
     </span>
   );
 }
