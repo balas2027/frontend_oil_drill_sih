@@ -380,9 +380,6 @@ export default function RiskAlerts() {
                 <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
                 {briefBusy ? t('common.loading') : t('risk.brief_pdf')}
               </button>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-                {t('app.synthetic')}
-              </span>
             </div>
           </div>
           <div className="w-full sm:w-80 bg-royal-50 border border-royal-100 rounded-lg p-3">
@@ -398,6 +395,17 @@ export default function RiskAlerts() {
           </div>
         </div>
       </div>
+
+      {/* Live parameters */}
+      <section className="bg-white p-4 rounded-xl border border-line shadow-sm">
+        <h3 className="text-sm font-bold text-royal-900 mb-2">
+          {t('risk.page.live_params')}{' '}
+          <span className="text-[11px] font-normal text-ink-600">
+            {records.length ? t('risk.page.last_records', { n: records.length }) : ''}
+          </span>
+        </h3>
+        <ParamMiniCharts records={records} />
+      </section>
 
       {banner && (
         <div
@@ -583,17 +591,6 @@ export default function RiskAlerts() {
           />
         </section>
       </div>
-
-      {/* Live parameters */}
-      <section className="bg-white p-4 rounded-xl border border-line shadow-sm">
-        <h3 className="text-sm font-bold text-royal-900 mb-2">
-          {t('risk.page.live_params')}{' '}
-          <span className="text-[11px] font-normal text-ink-600">
-            {records.length ? t('risk.page.last_records', { n: records.length }) : ''}
-          </span>
-        </h3>
-        <ParamMiniCharts records={records} />
-      </section>
 
       {model && (
         <p className="text-[11px] text-ink-600">

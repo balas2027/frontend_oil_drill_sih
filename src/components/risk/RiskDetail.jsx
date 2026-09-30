@@ -150,8 +150,7 @@ export default function RiskDetail({ risk, assessment }) {
             {risk.evidence.map((e) => (
               <li
                 key={e._id || `${e.well_id}${e.depth_from_md}`}
-                className="border-l-2 pl-2"
-                style={{ borderColor: EVENT_TYPE_COLORS[e.type] || '#94A3B8' }}
+                className="border border-line rounded px-2 py-1.5"
               >
                 <p className="font-semibold text-royal-900">
                   {e.well_id} · <span className="capitalize">{formatEventType(e.type)}</span> ·{' '}

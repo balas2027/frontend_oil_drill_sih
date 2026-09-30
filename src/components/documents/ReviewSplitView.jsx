@@ -167,7 +167,7 @@ export default function ReviewSplitView({ itemId, wellIds = [], onResolved }) {
           {item.source_kind}
         </p>
 
-        <blockquote className="border-l-4 border-gold-500 bg-gold-100/60 px-3 py-2 rounded-r text-ink-900">
+        <blockquote className="border border-line bg-royal-50 px-3 py-2 rounded text-ink-900">
           “{item.evidence?.snippet}”
           {item.evidence?.mitigation_snippet &&
             item.evidence.mitigation_snippet !== item.evidence.snippet && (

@@ -187,9 +187,6 @@ export default function DrillingTab({ wellIds }) {
                 events: events.length,
               })}
         </span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-          {t('app.synthetic')}
-        </span>
       </div>
       {error && (
         <p className="p-2 text-xs bg-red-50 border border-red-200 text-red-700 rounded">{error}</p>

@@ -27,8 +27,7 @@ export default function CorrelationEventCard({ event, align, onClose }) {
 
   return (
     <section
-      className="bg-white rounded-xl border border-line border-l-4 shadow-sm text-xs"
-      style={{ borderLeftColor: EVENT_TYPE_COLORS[e.type] }}
+      className="bg-white rounded-xl border border-line shadow-sm text-xs"
       aria-label={t('corr.card.aria')}
     >
       <header className="px-3 py-2 border-b border-line flex items-start justify-between gap-2">

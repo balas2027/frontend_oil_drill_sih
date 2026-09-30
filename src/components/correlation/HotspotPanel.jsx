@@ -131,8 +131,7 @@ export default function HotspotPanel({ data, selectedId, onSelect, onSelectEvent
                             <button
                               type="button"
                               onClick={() => onSelectEvent(e)}
-                              className="w-full text-left border border-line border-l-4 rounded px-2 py-1 hover:bg-royal-50"
-                              style={{ borderLeftColor: EVENT_TYPE_COLORS[e.type] }}
+                              className="w-full text-left border border-line rounded px-2 py-1 hover:bg-royal-50"
                             >
                               <span className="capitalize font-medium text-royal-900">
                                 {formatEventType(e.type)}

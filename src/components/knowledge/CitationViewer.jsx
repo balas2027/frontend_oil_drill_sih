@@ -57,7 +57,7 @@ export default function CitationViewer({ citation, onClose }) {
       </div>
 
       {c.snippet && (
-        <blockquote className="mx-3 mt-2 border-l-4 border-gold-500 bg-gold-100/60 px-3 py-1.5 rounded-r text-xs text-ink-900">
+        <blockquote className="mx-3 mt-2 border border-line bg-royal-50 px-3 py-1.5 rounded text-xs text-ink-900">
           “{c.snippet}”
         </blockquote>
       )}

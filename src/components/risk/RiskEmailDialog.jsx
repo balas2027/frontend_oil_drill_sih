@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Mail, Paperclip, Send, X } from 'lucide-react';
 import { riskApi } from '../../api/risk';
 import { apiErrorMessage } from '../../api/client';
-import { fmtPct } from './riskUtils';
+import { alertLevel, fmtPct } from './riskUtils';
 
 const input =
   'w-full text-xs border border-line rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-royal-600 focus:outline-none';
@@ -12,7 +12,7 @@ const input =
  * Send one risk box by e-mail: the server re-computes the look-ahead and mails the
  * alert data plus its source events, with the source report PDFs attached.
  */
-export default function RiskEmailDialog({ wellId, risk, depthMd, radiusKm, onClose }) {
+export default function RiskEmailDialog({ wellId, risk, depthMd, radiusKm, onClose, alert }) {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [configured, setConfigured] = useState(true);
@@ -55,6 +55,7 @@ export default function RiskEmailDialog({ wellId, risk, depthMd, radiusKm, onClo
         radius_km: radiusKm,
         note: note.trim() || undefined,
         attach_sources: attach,
+        alert_id: alert?._id,
       });
       setResult(res.data);
     } catch (err) {
@@ -69,7 +70,7 @@ export default function RiskEmailDialog({ wellId, risk, depthMd, radiusKm, onClo
       className="fixed inset-0 z-50 bg-royal-900/40 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={t('risk.mail.title')}
+      aria-label={alert ? t('risk.mail.alert_title') : t('risk.mail.title')}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <form
@@ -79,12 +80,15 @@ export default function RiskEmailDialog({ wellId, risk, depthMd, radiusKm, onClo
         <div className="px-4 py-3 border-b border-line bg-royal-50 flex items-start justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold text-royal-900 flex items-center gap-1.5">
-              <Mail className="w-4 h-4" aria-hidden="true" /> {t('risk.mail.title')}
+              <Mail className="w-4 h-4" aria-hidden="true" />{' '}
+              {alert ? t('risk.mail.alert_title') : t('risk.mail.title')}
             </h3>
             <p className="text-ink-600 mt-0.5">
               {wellId} · {t(`risk_types.${risk.type}`, { defaultValue: risk.label })} ·{' '}
-              {fmtPct(risk.probability)} · {t('risk.mail.at', { depth: Math.round(depthMd ?? 0) })}
+              {alert ? alertLevel(alert.level).label : fmtPct(risk.probability)} ·{' '}
+              {t('risk.mail.at', { depth: Math.round(depthMd ?? 0) })}
             </p>
+            {alert && <p className="text-royal-900 font-semibold mt-0.5">{alert.title}</p>}
           </div>
           <button
             type="button"

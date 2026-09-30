@@ -10,6 +10,8 @@ import { AlertCard } from '../components/risk/AlertFeed';
 import { AlertLevelIcon } from '../components/risk/LevelChip';
 import { alertLevel, mergeAlerts, RISK_TYPES } from '../components/risk/riskUtils';
 import { Pagination } from '../components/common/DataTable';
+import RiskEmailDialog from '../components/risk/RiskEmailDialog';
+import { useMapStore } from '../store/mapStore';
 
 const LIMIT = 25;
 const POLL_MS = 15000;
@@ -38,6 +40,8 @@ export default function Alerts() {
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState(null);
   const [updated, setUpdated] = useState(null);
+  const [emailAlert, setEmailAlert] = useState(null);
+  const radiusKm = useMapStore((s) => s.radiusKm);
 
   const setFilter = (k, v) => {
     const next = Object.fromEntries(params.entries());
@@ -284,6 +288,7 @@ export default function Alerts() {
                   busy={busyId === a._id}
                   onAction={act}
                   onFeedback={feedback}
+                  onEmail={canActOnAlerts(user) ? setEmailAlert : undefined}
                 />
                 <li className="flex gap-3 px-1 text-[11px]">
                   <Link
@@ -309,6 +314,16 @@ export default function Alerts() {
           onPage={(p) => setParams({ ...Object.fromEntries(params.entries()), page: String(p) })}
         />
       </div>
+      {emailAlert && (
+        <RiskEmailDialog
+          wellId={emailAlert.well_id}
+          risk={{ type: emailAlert.type, label: emailAlert.title, probability: emailAlert.probability }}
+          depthMd={emailAlert.depth_md}
+          radiusKm={radiusKm}
+          alert={emailAlert}
+          onClose={() => setEmailAlert(null)}
+        />
+      )}
     </div>
   );
 }

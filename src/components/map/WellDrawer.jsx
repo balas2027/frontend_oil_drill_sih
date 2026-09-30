@@ -223,8 +223,7 @@ export default function WellDrawer({
               {result.top_events.map((ev) => (
                 <li
                   key={ev._id}
-                  className="text-[11px] border border-line rounded-lg p-2 border-l-4"
-                  style={{ borderLeftColor: EVENT_TYPE_COLORS[ev.type] || '#94A3B8' }}
+                  className="text-[11px] border border-line rounded-lg p-2"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-royal-900 capitalize">

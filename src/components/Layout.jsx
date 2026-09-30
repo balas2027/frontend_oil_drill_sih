@@ -22,6 +22,7 @@ import {
   Keyboard,
   Sun,
   WifiOff,
+  Lock,
   Activity,
 } from 'lucide-react';
 import { useAuthStore, isAdmin } from '../store/authStore';
@@ -46,12 +47,10 @@ const NAV = [
   { key: 'admin', path: '/admin', icon: Settings, adminOnly: true },
 ];
 
-/** Header bell (Section 9): active alerts, coloured by the most severe level. */
-function AlertsBell() {
-  const { t } = useTranslation();
+/** Active-alert summary, polled for the header bell and the nav badge. */
+function useAlertSummary() {
   const [summary, setSummary] = useState(null);
   const location = useLocation();
-
   useEffect(() => {
     let cancelled = false;
     const load = () =>
@@ -66,19 +65,33 @@ function AlertsBell() {
       clearInterval(timer);
     };
   }, [location.pathname]);
+  return summary;
+}
 
+const TEXT_SIZE_KEY = 'nwis_text_size';
+function readTextSize() {
+  try {
+    return localStorage.getItem(TEXT_SIZE_KEY) || 'md';
+  } catch {
+    return 'md';
+  }
+}
+
+/** Header bell (Section 9): active alerts, coloured by the most severe level. */
+function AlertsBell({ summary }) {
+  const { t } = useTranslation();
   const active = summary?.active || 0;
   const worst = ['critical', 'warning', 'watch', 'info'].find((l) => summary?.by_level?.[l]);
   const live = summary?.simulations?.length > 0;
   return (
     <Link
       to="/alerts"
-      className="relative flex items-center gap-1.5 bg-royal-700/60 hover:bg-royal-700 px-3 py-2 rounded-lg border border-royal-600"
+      className="relative flex items-center gap-1.5 bg-white hover:bg-royal-100 px-3 h-9 rounded border border-line text-royal-700"
       aria-label={`${t('header.alerts_bell', { count: active })}${worst ? ` (${worst})` : ''}`}
     >
-      <Bell className="w-4 h-4 text-gold-500" aria-hidden="true" />
+      <Bell className="w-4 h-4 text-royal-700" aria-hidden="true" />
       {live && (
-        <span className="text-[10px] uppercase tracking-wider text-emerald-300 font-semibold">
+        <span className="text-[10px] uppercase tracking-wider text-statutory-600 font-bold">
           {t('header.live')}
         </span>
       )}
@@ -165,11 +178,24 @@ export default function Layout() {
     setMobileNavOpen,
   } = useUiStore();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [textSize, setTextSize] = useState(readTextSize);
+  const alertSummary = useAlertSummary();
   const navigate = useNavigate();
   const location = useLocation();
   const mainRef = useRef(null);
 
   useEffect(() => setMobileNavOpen(false), [location.pathname, setMobileNavOpen]);
+
+  // A- / A / A+ (portal accessibility control) scales every rem-based size
+  useEffect(() => {
+    document.documentElement.dataset.textSize = textSize;
+    try {
+      localStorage.setItem(TEXT_SIZE_KEY, textSize);
+    } catch {
+      /* storage unavailable */
+    }
+    window.dispatchEvent(new Event('resize'));
+  }, [textSize]);
 
   // Notify map/chart canvases to recalculate dimensions when sidebar opens or closes
   useEffect(() => {
@@ -197,8 +223,8 @@ export default function Layout() {
   const renderNav = (collapsed = false) => (
     <nav className="space-y-1" aria-label={t('nav.menu')}>
       {!collapsed && (
-        <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-ink-600 truncate">
-          {t('nav.menu')}
+        <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-[0.08em] text-ink-600 truncate font-display">
+          {t('nav.section')}
         </div>
       )}
       {items.map((item) => {
@@ -213,21 +239,27 @@ export default function Layout() {
             aria-current={isActive ? 'page' : undefined}
             aria-label={collapsed ? label : undefined}
             title={collapsed ? label : undefined}
-            className={`flex items-center rounded-lg text-xs font-medium transition-colors ${
+            className={`relative flex items-center rounded text-[13px] transition-colors ${
               collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
             } ${
-              isActive
-                ? collapsed
-                  ? 'bg-royal-100 text-royal-900 font-semibold ring-1 ring-royal-700/30'
-                  : 'bg-royal-100 text-royal-900 font-semibold border-l-4 border-royal-700'
-                : 'text-ink-600 hover:bg-royal-50 hover:text-royal-900'
+              isActive ? 'bg-royal-700 text-white font-semibold' : 'text-ink-900 hover:bg-royal-100'
             }`}
           >
             <Icon
-              className={`w-4 h-4 shrink-0 ${isActive ? 'text-royal-700' : 'text-ink-600'}`}
+              className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-royal-600'}`}
               aria-hidden="true"
             />
-            {!collapsed && <span className="truncate">{label}</span>}
+            {!collapsed && <span className="truncate flex-1">{label}</span>}
+            {item.key === 'alerts' && alertSummary?.open > 0 && (
+              <span
+                className={`min-w-[20px] h-5 px-1 rounded-sm bg-hazard-700 text-white text-[10px] font-bold flex items-center justify-center ${
+                  collapsed ? 'absolute -top-1 -right-1' : ''
+                }`}
+                aria-label={t('header.alerts_bell', { count: alertSummary.open })}
+              >
+                {alertSummary.open}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -239,11 +271,11 @@ export default function Layout() {
   })`;
 
   const statusBox = (
-    <div className="p-3 bg-royal-50 rounded-lg border border-royal-100 text-[11px] text-ink-600">
+    <div className="p-3 bg-white rounded border border-line text-[11px] text-ink-600">
       <span className="font-semibold text-royal-900 block mb-0.5">{t('status.title')}</span>
       {online ? (
-        <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+        <div className="flex items-center gap-1.5 text-statutory-800 font-semibold">
+          <span className="w-2 h-2 rounded-full bg-statutory-600" aria-hidden="true"></span>
           {t('status.online')}
         </div>
       ) : (
@@ -260,12 +292,12 @@ export default function Layout() {
 
   const miniStatusBox = (
     <div
-      className="p-2 bg-royal-50 rounded-lg border border-royal-100 flex items-center justify-center"
+      className="p-2 bg-white rounded border border-line flex items-center justify-center"
       title={statusText}
       aria-label={statusText}
     >
       {online ? (
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+        <span className="w-2.5 h-2.5 rounded-full bg-statutory-600" aria-hidden="true" />
       ) : (
         <WifiOff className="w-3.5 h-3.5 text-red-700" aria-hidden="true" />
       )}
@@ -273,7 +305,29 @@ export default function Layout() {
   );
 
   const ctl =
-    'flex items-center gap-1.5 bg-royal-700/60 hover:bg-royal-700 px-2.5 py-2 rounded-lg border border-royal-600 text-xs';
+    'flex items-center gap-1.5 bg-white hover:bg-royal-100 px-2.5 h-9 rounded border border-line text-xs text-royal-700';
+  const current = items.find(
+    (n) => location.pathname === n.path || location.pathname.startsWith(`${n.path}/`)
+  );
+  const crumb = current
+    ? t(`nav.${current.key}`)
+    : location.pathname.startsWith('/wells/')
+      ? t('nav.well')
+      : '';
+  const ribbonBtn = (size, label) => (
+    <button
+      key={size}
+      type="button"
+      onClick={() => setTextSize(size)}
+      aria-pressed={textSize === size}
+      aria-label={t(`header.text_${size}`)}
+      className={`px-1 leading-none hover:text-saffron-400 ${
+        textSize === size ? 'text-saffron-400 underline underline-offset-2' : ''
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-royal-50 print:h-auto print:overflow-visible">
@@ -283,93 +337,181 @@ export default function Layout() {
           e.preventDefault();
           mainRef.current?.focus();
         }}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-gold-500 focus:text-royal-900 focus:px-3 focus:py-2 focus:rounded-lg focus:font-semibold"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-saffron-600 focus:text-white focus:px-3 focus:py-2 focus:rounded focus:font-semibold"
       >
         {t('a11y.skip')}
       </a>
 
-      {/* Fixed Top bar - Royal 900 */}
-      <header className="sticky top-0 shrink-0 bg-royal-900 text-white shadow-md z-30 print:hidden">
-        <div className="px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-royal-700 transition-colors"
-              aria-label={mobileNavOpen ? t('nav.close_menu') : t('nav.open_menu')}
-              aria-expanded={mobileNavOpen}
-              aria-controls="mobile-nav"
-            >
-              {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-            <div className="w-9 h-9 rounded-md bg-gold-500 flex items-center justify-center text-royal-900 font-bold shadow">
-              <Compass className="w-5 h-5 stroke-[2.5]" aria-hidden="true" />
-            </div>
-            <div>
-              <span className="text-[10px] tracking-wider uppercase text-gold-500 font-semibold block">
-                {t('app.org')}
+      <header className="sticky top-0 shrink-0 z-30 print:hidden">
+        {/* Tier 1 - portal ribbon: identity, connection, skip link, text size, language */}
+        <div className="bg-navy-900 text-white text-[11px] font-display font-semibold">
+          <div className="px-4 h-8 flex items-center justify-between gap-3">
+            <p className="truncate">
+              <span lang="hi">{t('header.ribbon_org_hi')}</span>
+              <span className="mx-1.5 text-white/40">|</span>
+              <span>{t('header.ribbon_org')}</span>
+              <span className="hidden lg:inline">
+                <span className="mx-1.5 text-white/40">|</span>
+                <span lang="hi">{t('header.ribbon_ministry_hi')}</span>
+                <span className="mx-1.5 text-white/40">|</span>
+                {t('header.ribbon_ministry')}
               </span>
-              <h1 className="text-base font-bold tracking-tight leading-none">{t('app.name')}</h1>
+            </p>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="hidden md:flex items-center gap-1.5">
+                <span
+                  className={`w-2 h-2 rounded-full ${online ? 'bg-statutory-600' : 'bg-hazard-700'}`}
+                  aria-hidden="true"
+                />
+                {online ? t('status.online') : t('status.offline')}
+              </span>
+              <span className="hidden md:inline text-white/40">|</span>
+              <a
+                href="#main-content"
+                onClick={(e) => {
+                  e.preventDefault();
+                  mainRef.current?.focus();
+                }}
+                className="hidden md:inline hover:text-saffron-400"
+              >
+                {t('a11y.skip')}
+              </a>
+              <span className="hidden md:inline text-white/40">|</span>
+              <span className="flex items-center" role="group" aria-label={t('header.text_size')}>
+                {ribbonBtn('sm', 'A-')}
+                {ribbonBtn('md', 'A')}
+                {ribbonBtn('lg', 'A+')}
+              </span>
+              <span className="text-white/40">|</span>
+              <label className="flex items-center">
+                <span className="sr-only">{t('header.language')}</span>
+                <select
+                  value={i18n.language}
+                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                  className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code} className="text-ink-900">
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 text-xs">
-            <AlertsBell />
-            <label className={`${ctl} hidden sm:flex`}>
-              <span className="sr-only">{t('header.language')}</span>
-              <select
-                value={i18n.language}
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="bg-transparent text-white text-xs focus:outline-none cursor-pointer"
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l.code} value={l.code} className="text-ink-900">
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              onClick={toggleFieldMode}
-              aria-pressed={fieldMode}
-              title={t('header.field_mode_hint')}
-              className={`${ctl} hidden sm:flex ${fieldMode ? 'ring-2 ring-gold-500' : ''}`}
-            >
-              <Sun className="w-4 h-4 text-gold-500" aria-hidden="true" />
-              <span className="hidden lg:inline">{t('header.field_mode')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowShortcuts(true)}
-              className={`${ctl} hidden lg:flex`}
-              aria-label={t('header.shortcuts')}
-              title={`${t('header.shortcuts')} (?)`}
-            >
-              <Keyboard className="w-4 h-4 text-gold-500" aria-hidden="true" />
-            </button>
-            <div className="hidden sm:flex items-center gap-2 bg-royal-700/60 px-3 py-1.5 rounded-lg border border-royal-600">
-              <UserCheck className="w-4 h-4 text-gold-500" aria-hidden="true" />
-              <div>
-                <span className="font-semibold block text-white">{user?.name || 'Engineer'}</span>
-                <span className="text-[10px] text-royal-100 uppercase tracking-wider">
-                  {t(`common.role.${user?.role || 'engineer'}`)}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 bg-red-600/80 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium"
-            >
-              <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-              <span className="hidden sm:inline">{t('header.sign_out')}</span>
-            </button>
+          {/* Tricolor micro-accent */}
+          <div className="flex h-[3px]" aria-hidden="true">
+            <span className="flex-1 bg-saffron-400" />
+            <span className="flex-1 bg-white" />
+            <span className="flex-1 bg-statutory-600" />
           </div>
         </div>
-        {/* Official gold line */}
-        <div className="h-0.5 bg-gold-500 w-full"></div>
+
+        {/* Tier 2 - institutional masthead */}
+        <div className="bg-white border-b border-line">
+          <div className="px-4 h-16 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                className="md:hidden p-2 rounded border border-line text-royal-700"
+                aria-label={mobileNavOpen ? t('nav.close_menu') : t('nav.open_menu')}
+                aria-expanded={mobileNavOpen}
+                aria-controls="mobile-nav"
+              >
+                {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <div className="w-10 h-10 rounded bg-navy-900 flex items-center justify-center shrink-0">
+                <Compass className="w-5 h-5 text-saffron-400 stroke-[2.5]" aria-hidden="true" />
+              </div>
+              <div className="hidden sm:block w-px h-10 bg-line" aria-hidden="true" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-navy-900 leading-tight tracking-tight">
+                    {t('app.name')}
+                  </h1>
+                  <span className="hidden md:inline px-1.5 py-0.5 rounded-sm bg-saffron-50 border border-saffron-300 text-saffron-600 text-[10px] font-bold uppercase tracking-wider font-display">
+                    {t('header.system_badge')}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-600 truncate">
+                  {t('app.full')} · {t('app.org')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <AlertsBell summary={alertSummary} />
+              <button
+                type="button"
+                onClick={toggleFieldMode}
+                aria-pressed={fieldMode}
+                title={t('header.field_mode_hint')}
+                className={`${ctl} hidden sm:flex ${fieldMode ? 'border-saffron-600 bg-saffron-50' : ''}`}
+              >
+                <Sun className="w-4 h-4 text-saffron-600" aria-hidden="true" />
+                <span className="hidden lg:inline">{t('header.field_mode')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowShortcuts(true)}
+                className={`${ctl} hidden lg:flex`}
+                aria-label={t('header.shortcuts')}
+                title={`${t('header.shortcuts')} (?)`}
+              >
+                <Keyboard className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <div className="hidden sm:flex items-center gap-2 pl-3 ml-1 border-l border-line">
+                <div className="text-right leading-tight">
+                  <span className="font-bold block text-navy-900 font-display">
+                    {user?.name || 'Engineer'}
+                  </span>
+                  <span className="text-[10px] text-ink-600 uppercase tracking-wider font-semibold">
+                    {t(`common.role.${user?.role || 'engineer'}`)}
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-navy-900 text-white flex items-center justify-center">
+                  <UserCheck className="w-4 h-4" aria-hidden="true" />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 bg-hazard-700 hover:bg-[#8e1515] text-white px-3 h-9 rounded text-xs font-semibold"
+              >
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">{t('header.sign_out')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tier 3 - operational command bar */}
+        <div className="bg-white border-b border-line">
+          <div className="px-4 h-9 flex items-center justify-between gap-3 text-[11px]">
+            <nav
+              aria-label={t('header.breadcrumb')}
+              className="flex items-center gap-1.5 font-display font-semibold uppercase tracking-wider min-w-0"
+            >
+              <span className="text-ink-600">{t('app.name')}</span>
+              <span className="text-ink-600" aria-hidden="true">
+                ›
+              </span>
+              <span className="text-navy-900 truncate">{crumb}</span>
+            </nav>
+            <div className="flex items-center gap-3 text-ink-600 shrink-0">
+              {alertSummary?.simulations?.length > 0 && (
+                <span className="hidden md:flex items-center gap-1 text-statutory-800 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-statutory-600" aria-hidden="true" />
+                  {t('header.replays_running', { n: alertSummary.simulations.length })}
+                </span>
+              )}
+              <span className="tabular-nums">
+                {syncTime ? t('footer.last_sync', { time: syncTime }) : t('footer.never_synced')}
+              </span>
+            </div>
+          </div>
+        </div>
       </header>
 
       {!online && (
@@ -432,11 +574,19 @@ export default function Layout() {
           <aside
             id="desktop-sidebar"
             className={`flex flex-col justify-between bg-white border-r border-line h-full overflow-y-auto overflow-x-hidden transition-all duration-200 ease-in-out ${
-              sidebarOpen ? 'w-64 p-4' : 'w-16 py-4 px-2'
+              sidebarOpen ? 'w-64 p-3' : 'w-16 py-3 px-2'
             }`}
           >
             <div>{renderNav(!sidebarOpen)}</div>
-            <div className="mt-4">{sidebarOpen ? statusBox : miniStatusBox}</div>
+            <div className="mt-4 space-y-3">
+              {sidebarOpen ? statusBox : miniStatusBox}
+              {sidebarOpen && (
+                <div className="pt-3 border-t border-line text-[11px] leading-tight">
+                  <p className="font-bold text-navy-900 uppercase font-display">{t('app.org')}</p>
+                  <p className="text-ink-600">{t('footer.assets')}</p>
+                </div>
+              )}
+            </div>
           </aside>
 
           {/* Open / Close toggle icon at the vertical middle of the sidebar edge */}
@@ -447,7 +597,7 @@ export default function Layout() {
             aria-expanded={sidebarOpen}
             aria-controls="desktop-sidebar"
             title={sidebarOpen ? t('nav.close_menu') : t('nav.open_menu')}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-12 rounded-full bg-white border border-line shadow-md flex items-center justify-center text-royal-700 hover:bg-royal-900 hover:text-gold-500 hover:border-royal-900 transition-colors"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-12 rounded bg-white border border-line flex items-center justify-center text-royal-700 hover:bg-navy-900 hover:text-white hover:border-navy-900 transition-colors"
           >
             {sidebarOpen ? (
               <ChevronLeft className="w-4 h-4" aria-hidden="true" />
@@ -469,12 +619,11 @@ export default function Layout() {
             <Outlet key={i18n.language} />
           </main>
 
-          <footer className="shrink-0 print:hidden bg-white border-t border-line py-2.5 px-6 text-center text-xs text-ink-600 flex flex-col md:flex-row justify-between items-center gap-2">
-            <span>{t('footer.version')}</span>
-            <span className="tabular-nums">
-              {syncTime ? t('footer.last_sync', { time: syncTime }) : t('footer.never_synced')}
+          <footer className="shrink-0 print:hidden bg-[#FFF8E1] border-t border-[#FFE082] py-2 px-4 text-[11px] flex flex-col md:flex-row justify-between items-center gap-1.5">
+            <span className="flex items-center gap-1.5 font-display font-bold uppercase tracking-wide text-saffron-600">
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" /> {t('footer.notice')}
             </span>
-            <span className="text-[11px] text-ink-600">{t('footer.notice')}</span>
+            <span className="text-ink-600 font-display font-semibold">{t('footer.version')}</span>
           </footer>
         </div>
       </div>

@@ -53,7 +53,7 @@ function LessonCard({ lesson, curator, admin, onChanged }) {
           ))}
       </dl>
       {lesson.recommendation && (
-        <p className="border-l-4 border-gold-500 bg-gold-100/60 px-2.5 py-1.5 rounded-r text-ink-900">
+        <p className="border border-line bg-royal-50 px-2.5 py-1.5 rounded text-ink-900">
           {lesson.recommendation}
         </p>
       )}

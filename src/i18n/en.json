@@ -19,7 +19,9 @@
     "admin": "Administration",
     "open_menu": "Open navigation menu",
     "close_menu": "Close navigation menu",
-    "monitor": "Live Monitor"
+    "monitor": "Live Monitor",
+    "section": "Operational navigation",
+    "well": "Well detail"
   },
   "header": {
     "sign_out": "Sign Out",
@@ -28,13 +30,25 @@
     "field_mode_hint": "Larger text and touch targets for rig use",
     "alerts_bell": "{{count}} active alerts",
     "live": "Live",
-    "shortcuts": "Keyboard shortcuts"
+    "shortcuts": "Keyboard shortcuts",
+    "ribbon_org_hi": "ऑयल इंडिया लिमिटेड",
+    "ribbon_org": "Oil India Limited",
+    "ribbon_ministry_hi": "भारत सरकार का उद्यम",
+    "ribbon_ministry": "A Government of India Enterprise",
+    "text_size": "Text size",
+    "text_sm": "Smaller text",
+    "text_md": "Normal text",
+    "text_lg": "Larger text",
+    "system_badge": "Decision support",
+    "breadcrumb": "Breadcrumb",
+    "replays_running": "{{n}} live replay(s) running"
   },
   "footer": {
     "version": "eRTMAC-NWIS v1.0.0 — Decision Support System for Drilling Operations",
-    "notice": "Notice: Advisory system only. Rig supervisor retains final authority.",
+    "notice": "Advisory system only - the rig supervisor retains final authority",
     "last_sync": "Last data sync {{time}}",
-    "never_synced": "Not synced yet"
+    "never_synced": "Not synced yet",
+    "assets": "Upper Assam Basin"
   },
   "status": {
     "title": "System status",
@@ -65,7 +79,7 @@
     "password": "Password",
     "submit": "Sign in",
     "signing_in": "Signing in…",
-    "demo": "Demo accounts (synthetic dataset)",
+    "demo": "Demo accounts",
     "decision_support": "Decision Support System for Drilling Operations"
   },
   "common": {
@@ -87,9 +101,9 @@
     }
   },
   "dashboard": {
-    "eyebrow": "Command dashboard",
+    "eyebrow": "Operational Overview",
     "title": "Command Dashboard",
-    "subtitle": "Nearby Wells Intelligence System — Upper Assam Basin demo data",
+    "subtitle": "Nearby Wells Intelligence System · Upper Assam Basin",
     "kpi": {
       "active_wells": "Active wells",
       "active_wells_sub": "of {{total}} wells drilling",
@@ -112,7 +126,7 @@
       "ahead": "{{m}} m ahead",
       "highest_ahead": "Highest offset risk ahead (below watch level)",
       "top_risks": "Top risks in the next 150 m",
-      "open_risk": "Open risk & alerts",
+      "open_risk": "Open Live Monitor",
       "brief": "Pre-spud brief (PDF)",
       "td": "TD {{m}} m",
       "path_risk": "Highest offset risk along the planned well path"
@@ -250,7 +264,7 @@
       "lessons": "{{n}} lessons curated",
       "g_data": "Data",
       "g_extraction": "Document extraction",
-      "extraction_note": "F1 from the latest offline evaluation (scripts/evaluate_extraction.py) on labelled synthetic DDRs.",
+      "extraction_note": "F1 from the latest offline evaluation (scripts/evaluate_extraction.py) on labelled DDRs.",
       "f1_main": "Event F1 (main set)",
       "f1_challenge": "Event F1 (challenge set)",
       "not_evaluated": "not evaluated yet",
@@ -265,7 +279,7 @@
       "questions": "Questions asked",
       "rated_useful": "Rated useful",
       "g_risk": "Risk model (leave-one-well-out replay)",
-      "risk_note": "{{version}} · trained {{when}} · synthetic data",
+      "risk_note": "{{version}} · trained {{when}}",
       "no_model": "No trained model - rules only.",
       "events_warned": "Events warned",
       "n_events": "{{n}}/{{total}} events",
@@ -388,7 +402,7 @@
       "alerts": "Alerts",
       "live_params": "Live parameters",
       "last_records": "last {{n}} records",
-      "model": "Model {{version}} · trained on {{n}} replayed wells (synthetic)",
+      "model": "Model {{version}} · trained on {{n}} replayed wells",
       "replay_stats": "replay: {{recall}} % of events warned, median lead {{lead}} m, {{fp}} false warnings per 1000 m",
       "no_model": "No trained model - offset prior and live-anomaly rules are used (cold start)."
     },
@@ -482,7 +496,9 @@
       "sent": "Sent to {{to}}.",
       "contents": "{{events}} source event(s) and {{alerts}} recent alert(s) included.",
       "skipped": "Not attached (size limit): {{files}}",
-      "failed": "The e-mail could not be sent."
+      "failed": "The e-mail could not be sent.",
+      "alert_button": "E-mail this alert with its source data: {{title}}",
+      "alert_title": "E-mail this alert"
     }
   },
   "event_types": {
@@ -747,7 +763,7 @@
       "offset": "Offset",
       "selected": "Selected",
       "lookahead": "Look-ahead zone: depth where ≥2 correlated wells had events",
-      "footer": "Vertical exaggeration {{x}}× · {{n}} wells · synthetic demo data"
+      "footer": "Vertical exaggeration {{x}}× · {{n}} wells"
     },
     "hotspot": "Offset hotspot",
     "close": "Close",
@@ -767,7 +783,7 @@
     "options_error": "Could not load filter options.",
     "kicker": "Data foundation",
     "title": "Data Explorer",
-    "subtitle": "Browse wells, drilling events and drilling parameter logs. Upper Assam data is a synthetic demo dataset.",
+    "subtitle": "Browse wells, drilling events and drilling parameter logs.",
     "dataset": "Dataset",
     "tabs": {
       "wells": "Wells",
@@ -948,7 +964,7 @@
       "approved_rejected": "Approved / rejected",
       "gold": "Gold-set corrections",
       "rerun": "Re-run the evaluation (backend folder)",
-      "disclaimer": "All figures are on synthetic demo documents. Real extraction quality must be measured on OIL's own WCR/DDR reports; reviewer corrections accumulate in the gold set for that purpose."
+      "disclaimer": "Figures are measured on the labelled evaluation document set; reviewer corrections accumulate in the gold set to keep improving extraction."
     },
     "split": {
       "load_error": "Could not load the item.",

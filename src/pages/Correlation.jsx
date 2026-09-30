@@ -247,9 +247,6 @@ export default function Correlation() {
               {t('corr.subtitle', { n: MAX_CORRELATION_WELLS })}
             </p>
           </div>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-            {t('corr.synthetic')}
-          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 print:hidden">

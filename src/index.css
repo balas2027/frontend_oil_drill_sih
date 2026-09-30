@@ -3,28 +3,92 @@
 @tailwind utilities;
 
 :root {
-  --royal-900: #0a2a66;
-  --royal-700: #123c8f;
-  --royal-600: #1d4fb8;
-  --royal-500: #3b6fd8;
-  --royal-100: #e6eefb;
-  --royal-50: #f4f7fe;
-  --gold-500: #c9a227;
-  --gold-100: #fbf3d6;
-  --ink-900: #0f172a;
-  --ink-600: #475569;
-  --line: #d6dfee;
+  /* DESIGN.md tokens */
+  --navy-900: #0b1e36;
+  --navy-800: #0f2942;
+  --saffron: #e65100;
+  --saffron-light: #ff9933;
+  --statutory: #138808;
+  --canvas: #f4f6f9;
+  --line: #d1d7dc;
+  --line-soft: #e2e7ec;
+  --text: #16212d;
+  --text-muted: #5a6872;
+  --hazard: #b71c1c;
+  /* legacy names used by map/chart code */
+  --royal-900: #0f2942;
+  --royal-700: #0b1e36;
+  --royal-600: #1f3a5c;
+  --royal-500: #4e5f7a;
+  --royal-100: #e6ebf1;
+  --royal-50: #f4f6f9;
+  --gold-500: #e65100;
+  --gold-100: #fff3e0;
+  --ink-900: #16212d;
+  --ink-600: #5a6872;
+}
+
+/* Text size (A- / A / A+ in the portal ribbon) scales every rem-based size */
+html {
+  font-size: 16px;
+}
+html[data-text-size='sm'] {
+  font-size: 15px;
+}
+html[data-text-size='lg'] {
+  font-size: 17.5px;
 }
 
 body {
-  /* Noto Sans Devanagari / Bengali cover Hindi and Assamese (Section 9 typography) */
+  /* Body & tabular analytics in Noto Sans (renders Devanagari / Assamese cleanly) */
+  font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Bengali', 'Inter', sans-serif;
+  background-color: var(--canvas);
+  color: var(--text);
+}
+
+/* Section headers and IDs in Inter */
+h1,
+h2,
+h3,
+h4,
+.font-display {
   font-family: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Bengali', sans-serif;
-  background-color: #f4f7fe;
-  color: #0f172a;
+  letter-spacing: -0.005em;
 }
 
 .heading-serif {
-  font-family: 'Merriweather', serif;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Telemetry numbers align in columns everywhere */
+.tabular-nums,
+td,
+dd {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Data tables & logs: navy header row, zebra rows, compact 1px dividers */
+main table thead tr,
+main table thead tr[class] {
+  background-color: var(--navy-900);
+  color: #fff;
+}
+main table thead tr[class] th,
+main table thead th {
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+main table thead th button,
+main table thead th svg {
+  color: inherit;
+}
+main table tbody tr:nth-child(even):not([class*='bg-']) {
+  background-color: #f8f9fa;
+}
+main table tbody tr {
+  border-bottom: 1px solid var(--line-soft);
 }
 
 /* Active well marker on the map (gold star) */
@@ -35,22 +99,24 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 9999px;
-  background: #c9a227;
+  background: #e65100;
   border: 2px solid #fff;
   box-shadow:
-    0 0 0 3px rgba(201, 162, 39, 0.35),
-    0 2px 6px rgba(10, 42, 102, 0.35);
+    0 0 0 3px rgba(230, 81, 0, 0.3),
+    0 2px 6px rgba(11, 30, 54, 0.35);
   cursor: default;
 }
 
 .maplibregl-popup-content {
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 10px 12px;
-  font-family: 'Inter', sans-serif;
+  border: 1px solid #0b1e36;
+  box-shadow: 0 4px 12px rgba(11, 30, 54, 0.12);
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .maplibregl-ctrl-group button:focus-visible {
-  outline: 2px solid #1d4fb8;
+  outline: 2px solid #0b1e36;
 }
 
 /* Evidence highlight on a PDF page (gold, gentle pulse) */
@@ -72,9 +138,9 @@ body {
   }
 }
 
-/* Visible keyboard focus everywhere (WCAG 2.1 AA, Section 11: focus outlines in royal-600) */
+/* Visible keyboard focus everywhere: 2px navy, no diffuse glow */
 :focus-visible {
-  outline: 2px solid #1d4fb8;
+  outline: 2px solid #0b1e36;
   outline-offset: 2px;
 }
 
@@ -83,7 +149,7 @@ html.field-mode body {
   zoom: 1.15;
 }
 html.field-mode .text-ink-600 {
-  color: #334155;
+  color: #2c3a45;
 }
 html.field-mode button,
 html.field-mode select,

@@ -92,7 +92,7 @@ export default function NearbyList({
                 aria-pressed={selected}
                 className={`w-full text-left px-3 py-2.5 border-b border-line/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-royal-600 ${
                   selected
-                    ? 'bg-royal-100 border-l-4 border-l-royal-700'
+                    ? 'bg-royal-100'
                     : hovered
                       ? 'bg-royal-50'
                       : 'hover:bg-royal-50'

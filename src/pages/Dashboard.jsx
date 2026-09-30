@@ -32,28 +32,30 @@ const IDLE_POLL_MS = 30000;
 const DASH_WELL_KEY = 'nwis_dashboard_well';
 
 function Kpi({ icon: Icon, label, value, sub, tone = 'royal', to }) {
+  // Telemetry card (DESIGN.md): uppercase label + icon on a 1px divider, large tabular
+  // value; tone colours the icon only (never colour alone - label + value)
   const tones = {
-    royal: 'bg-royal-100 text-royal-700',
-    gold: 'bg-gold-100 text-[#6B5310]',
-    red: 'bg-[#FDECEE] text-[#C62D3B]',
-    green: 'bg-emerald-50 text-emerald-700',
+    royal: { icon: 'text-navy-900' },
+    gold: { icon: 'text-saffron-600' },
+    red: { icon: 'text-hazard-700' },
+    green: { icon: 'text-statutory-800' },
   };
+  const tn = tones[tone] || tones.royal;
   const body = (
     <>
-      <div
-        className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${tones[tone]}`}
-      >
-        <Icon className="w-5 h-5" aria-hidden="true" />
+      <div className="flex items-center justify-between gap-2 pb-2 border-b border-line">
+        <span className="text-[11px] font-display font-semibold uppercase tracking-[0.05em] text-ink-900 truncate">
+          {label}
+        </span>
+        <Icon className={`w-4 h-4 shrink-0 ${tn.icon}`} aria-hidden="true" />
       </div>
-      <div className="min-w-0">
-        <span className="text-xs text-ink-600 font-medium block">{label}</span>
-        <p className="text-xl font-bold text-royal-900 tabular-nums leading-tight">{value}</p>
-        {sub && <span className="text-[10px] text-ink-600 block truncate">{sub}</span>}
-      </div>
+      <p className="mt-2 text-[28px] leading-none font-display font-bold text-navy-900 tabular-nums">
+        {value}
+      </p>
+      {sub && <span className="mt-1.5 text-[11px] text-ink-600 block truncate">{sub}</span>}
     </>
   );
-  const cls =
-    'bg-white p-4 rounded-xl border border-line shadow-sm flex items-center gap-3 border-b-2 border-b-gold-500/60';
+  const cls = 'bg-white p-3.5 rounded border border-line flex flex-col';
   return to ? (
     <Link to={to} className={`${cls} hover:bg-royal-50`}>
       {body}
@@ -210,9 +212,6 @@ export default function Dashboard() {
               ))}
             </select>
           </label>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-100 text-[#6B5310] border border-gold-500/40">
-            {t('app.synthetic')}
-          </span>
         </div>
       </div>
 
@@ -455,8 +454,7 @@ export default function Dashboard() {
               {data.recent_alerts.map((al) => (
                 <li
                   key={al._id}
-                  className="px-4 py-2.5 flex items-start gap-3 text-xs border-l-4"
-                  style={{ borderLeftColor: alertLevel(al.level).color }}
+                  className="px-4 py-2.5 flex items-start gap-3 text-xs"
                 >
                   <AlertLevelChip level={al.level} />
                   <div className="min-w-0 flex-1">

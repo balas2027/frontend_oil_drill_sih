@@ -123,7 +123,7 @@ export default function ReviewTab({ wellIds }) {
                   aria-pressed={selected === it._id}
                   className={`w-full text-left px-3 py-2 border-b border-line/60 text-xs ${
                     selected === it._id
-                      ? 'bg-royal-100 border-l-4 border-l-royal-700'
+                      ? 'bg-royal-100'
                       : 'hover:bg-royal-50'
                   }`}
                 >

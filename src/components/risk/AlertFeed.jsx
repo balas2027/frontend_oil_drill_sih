@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronDown, FileText, ThumbsDown, ThumbsUp, X } from 'lucide-react';
+import { Check, ChevronDown, FileText, Mail, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import { AlertLevelChip, AlertLevelIcon } from './LevelChip';
 import { ALERT_STATUS_LABELS, RULE_LABELS, alertLevel } from './riskUtils';
 
 const btn =
   'inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[11px] font-medium focus:outline-none focus:ring-2 focus:ring-royal-600 disabled:opacity-40';
 
-export function AlertCard({ alert, canAct, busy, onAction, onFeedback, fresh }) {
+export function AlertCard({ alert, canAct, busy, onAction, onFeedback, fresh, onEmail }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const l = alertLevel(alert.level);
@@ -18,10 +18,9 @@ export function AlertCard({ alert, canAct, busy, onAction, onFeedback, fresh }) 
 
   return (
     <li
-      className={`bg-white border border-line border-l-4 rounded-lg shadow-sm ${fresh ? 'ring-2 ring-gold-500' : ''} ${
+      className={`bg-white border border-line rounded-lg shadow-sm ${fresh ? 'ring-2 ring-gold-500' : ''} ${
         active ? '' : 'opacity-70'
       }`}
-      style={{ borderLeftColor: l.color }}
     >
       <div className="p-2.5 space-y-1.5">
         <div className="flex items-start gap-2">
@@ -49,6 +48,17 @@ export function AlertCard({ alert, canAct, busy, onAction, onFeedback, fresh }) 
               <span className="text-[10px] text-red-700">✉ {t('risk.feed.email_failed')}</span>
             )}
           </div>
+          {onEmail && (
+            <button
+              type="button"
+              onClick={() => onEmail(alert)}
+              className="p-1.5 rounded border border-line bg-white text-royal-700 hover:bg-royal-100 shrink-0"
+              aria-label={t('risk.mail.alert_button', { title: alert.title })}
+              title={t('risk.mail.alert_button', { title: alert.title })}
+            >
+              <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          )}
         </div>
         <p className="text-[11px] text-ink-900 leading-snug">{alert.message}</p>
 
