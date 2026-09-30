@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import * as maplibregl from 'maplibre-gl';
+import maplibregl from './maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import mlcontour from 'maplibre-contour';
 import i18n from '../../i18n';
 import { MAP_MODES, DEM_SOURCE, LABEL_FONT } from './mapModes';
 import { EVENT_DENSITY_STOPS, formatStatusWord } from './eventStyles';
-import { buildArcs, buildBoundaries, buildHexbins, buildRings } from './mapOverlays';
+import { buildBoundaries, buildHexbins, buildRings } from './mapOverlays';
 
 const FIELD_CENTER = [95.3, 27.35];
 const INDIA_CENTER = [82.8, 22.5];
@@ -20,7 +20,6 @@ const SRC = {
   trajectories: 'nwis-trajectories',
   rings: 'nwis-rings',
   ringLabels: 'nwis-ring-labels',
-  arcs: 'nwis-arcs',
   hex: 'nwis-hexbins',
   boundaries: 'nwis-boundaries',
   contours: 'nwis-contours',
@@ -41,7 +40,6 @@ const LYR = {
   hexLine: 'nwis-hex-line',
   contourLine: 'nwis-contour-line',
   contourLabel: 'nwis-contour-label',
-  arcs: 'nwis-arcs-line',
   rings: 'nwis-rings-line',
   ringLabels: 'nwis-rings-label',
   clusters: 'nwis-clusters',
@@ -185,7 +183,6 @@ function syncData(map, p) {
   const rings = p.layers.rings ? buildRings(center) : { rings: EMPTY_FC, labels: EMPTY_FC };
   setData(map, SRC.rings, rings.rings);
   setData(map, SRC.ringLabels, rings.labels);
-  setData(map, SRC.arcs, p.layers.arcs ? buildArcs(center, p.nearbyWells) : EMPTY_FC);
   setData(map, SRC.hex, p.layers.hexbins && p.heatmapData ? buildHexbins(p.heatmapData) : EMPTY_FC);
   setData(map, SRC.boundaries, p.layers.boundaries ? buildBoundaries(p.allWells) : EMPTY_FC);
   if (p.layers.contours && !map.getSource(SRC.contours)) {
@@ -352,18 +349,6 @@ function syncData(map, p) {
       'line-color': ['case', ['==', ['get', 'well_id'], activeId || ''], '#C9A227', '#1D4FB8'],
       'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 14, 4],
       'line-opacity': 0.85,
-    },
-  });
-  ensureLayer(map, {
-    id: LYR.arcs,
-    type: 'line',
-    source: SRC.arcs,
-    layout: { 'line-cap': 'round' },
-    paint: {
-      // Active well -> offset well; width and opacity follow similarity
-      'line-color': '#C9A227',
-      'line-width': ['interpolate', ['linear'], ['get', 'similarity'], 0, 1, 1, 6],
-      'line-opacity': ['interpolate', ['linear'], ['get', 'similarity'], 0, 0.35, 1, 0.9],
     },
   });
   ensureLayer(map, {

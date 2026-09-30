@@ -1,6 +1,6 @@
 /**
  * Pure GeoJSON builders for the analysis overlays on the well map
- * (Development Guide Section 8B-C/B and 10.3): distance rings, offset arcs,
+ * (Development Guide Section 8B-C/B and 10.3): distance rings,
  * event-density hex bins and field/block boundaries. No DOM, no map - testable.
  */
 import * as turf from '@turf/turf';
@@ -20,42 +20,6 @@ export function buildRings(center, radii = RING_RADII_KM) {
     turf.destination(turf.point(center), km, 0, { units: 'kilometers', properties: { km, label: `${km} km` } })
   );
   return { rings: turf.featureCollection(rings), labels: turf.featureCollection(labels) };
-}
-
-/**
- * Curved arcs from the active well to each offset well; `similarity` drives width.
- * A quadratic Bezier bulging to the right of the chord keeps arcs distinguishable.
- */
-export function buildArcs(center, nearby, steps = 24) {
-  if (!center) return EMPTY;
-  const features = [];
-  for (const r of nearby || []) {
-    const to = r.well?.location?.coordinates;
-    if (!to) continue;
-    const [x0, y0] = center;
-    const [x1, y1] = to;
-    const mx = (x0 + x1) / 2;
-    const my = (y0 + y1) / 2;
-    // perpendicular offset proportional to the chord length
-    const cx = mx - (y1 - y0) * 0.2;
-    const cy = my + (x1 - x0) * 0.2;
-    const coords = [];
-    for (let i = 0; i <= steps; i += 1) {
-      const t = i / steps;
-      const a = (1 - t) ** 2;
-      const b = 2 * (1 - t) * t;
-      const c = t ** 2;
-      coords.push([a * x0 + b * cx + c * x1, a * y0 + b * cy + c * y1]);
-    }
-    features.push(
-      turf.lineString(coords, {
-        well_id: r.well.well_id,
-        similarity: r.similarity ?? 0,
-        distance_km: r.distance_km,
-      })
-    );
-  }
-  return turf.featureCollection(features);
 }
 
 /**

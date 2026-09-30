@@ -60,12 +60,6 @@ function MapLegend({ mapMode, eventType, layers }) {
         <span className="w-4 h-0.5 bg-royal-600 rounded" aria-hidden="true" />
         {t('map.legend.path')}
       </div>
-      {layers.arcs && (
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-1 bg-gold-500 rounded" aria-hidden="true" />
-          {t('map.legend.arcs')}
-        </div>
-      )}
       {layers.rings && (
         <div className="flex items-center gap-2">
           <span className="w-4 border-t border-dashed border-royal-900" aria-hidden="true" />

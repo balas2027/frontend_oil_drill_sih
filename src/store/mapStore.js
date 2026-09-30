@@ -75,7 +75,6 @@ export const useMapStore = create((set) => ({
     clusters: true,
     radius: true,
     rings: false,
-    arcs: true,
     trajectories: true,
     hexbins: false,
     boundaries: true,

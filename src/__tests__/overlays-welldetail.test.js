@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   RING_RADII_KM,
-  buildArcs,
   buildBoundaries,
   buildHexbins,
   buildRings,
@@ -31,23 +30,6 @@ describe('map overlays (item 5)', () => {
 
   it('returns empty collections without an active well', () => {
     expect(buildRings(null).rings.features).toHaveLength(0);
-    expect(buildArcs(null, []).features).toHaveLength(0);
-  });
-
-  it('draws a curved arc per offset well carrying its similarity', () => {
-    const nearby = [
-      { well: { well_id: 'A', location: { coordinates: [95.05, 27.42] } }, similarity: 0.8, distance_km: 5 },
-      { well: { well_id: 'B', location: { coordinates: [94.95, 27.38] } }, similarity: 0.4, distance_km: 6 },
-      { well: { well_id: 'C' } }, // no location -> skipped
-    ];
-    const arcs = buildArcs(CENTER, nearby, 10);
-    expect(arcs.features).toHaveLength(2);
-    const a = arcs.features[0];
-    expect(a.properties).toMatchObject({ well_id: 'A', similarity: 0.8 });
-    expect(a.geometry.coordinates.length).toBeGreaterThanOrEqual(10);
-    // curved: the midpoint is off the straight chord
-    const mid = a.geometry.coordinates[Math.floor(a.geometry.coordinates.length / 2)];
-    expect(mid).not.toEqual([(95.0 + 95.05) / 2, (27.4 + 27.42) / 2]);
   });
 
   it('bins events into hexagons with counts and severity weight', () => {

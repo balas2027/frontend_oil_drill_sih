@@ -29,7 +29,6 @@ const LAYER_TOGGLES = [
   { key: 'clusters' },
   { key: 'radius' },
   { key: 'rings' },
-  { key: 'arcs' },
   { key: 'trajectories' },
   { key: 'hexbins' },
   { key: 'boundaries' },
