@@ -2,8 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------- theme tokens
+ * Tailwind colours read these as RGB channels (tailwind.config.js), so the whole
+ * UI switches theme by redefining them under html.dark.
+ */
 :root {
-  /* DESIGN.md tokens */
+  --c-royal-50: 244 246 249; /* app canvas */
+  --c-royal-100: 230 235 241; /* hover / selected tint */
+  --c-royal-500: 78 95 122;
+  --c-royal-600: 31 58 92; /* links, focus */
+  --c-royal-700: 11 30 54; /* primary navy: buttons, active nav, table headers */
+  --c-royal-900: 15 41 66; /* headings */
+  --c-gold-100: 255 243 224;
+  --c-gold-500: 230 81 0;
+  --c-ink-600: 90 104 114; /* captions */
+  --c-ink-900: 22 33 45; /* body text */
+  --c-line: 209 215 220;
+  --c-navy-900: 11 30 54;
+  --c-navy-800: 15 41 66;
+  --c-navy-700: 31 58 92;
+  --c-saffron-50: 255 243 224;
+  --c-saffron-300: 255 183 77;
+  --c-saffron-400: 255 153 51;
+  --c-saffron-600: 230 81 0;
+  --c-statutory-50: 232 245 233;
+  --c-statutory-300: 129 199 132;
+  --c-statutory-600: 19 136 8;
+  --c-statutory-800: 27 94 32;
+  --c-hazard-50: 255 235 238;
+  --c-hazard-300: 229 115 115;
+  --c-hazard-700: 183 28 28;
+  --c-ash-50: 248 249 250;
+  --c-ash-100: 236 239 241;
+  --c-ash-200: 233 236 239;
+  --c-ash-300: 226 231 236;
+  --c-ash-400: 207 216 220;
+
+  --surface: #ffffff; /* cards, inputs */
+  --zebra: #f8f9fa;
+  --table-head: #0b1e36;
+
+  /* plain-hex names used by map / chart code */
   --navy-900: #0b1e36;
   --navy-800: #0f2942;
   --saffron: #e65100;
@@ -15,7 +54,6 @@
   --text: #16212d;
   --text-muted: #5a6872;
   --hazard: #b71c1c;
-  /* legacy names used by map/chart code */
   --royal-900: #0f2942;
   --royal-700: #0b1e36;
   --royal-600: #1f3a5c;
@@ -26,6 +64,204 @@
   --gold-100: #fff3e0;
   --ink-900: #16212d;
   --ink-600: #5a6872;
+}
+
+html.dark {
+  --c-royal-50: 16 36 54; /* canvas card insert */
+  --c-royal-100: 30 58 96; /* hover / selected blue tint */
+  --c-royal-500: 147 197 253;
+  --c-royal-600: 147 197 253; /* links */
+  --c-royal-700: 147 197 253; /* primary accent: readable bright sky blue */
+  --c-royal-900: 241 245 249; /* crisp white headings */
+  --c-gold-100: 58 40 18;
+  --c-gold-500: 255 183 77;
+  --c-ink-600: 160 174 192; /* captions / subtext */
+  --c-ink-900: 241 245 249; /* crisp body text */
+  --c-line: 43 59 78;
+  --c-navy-900: 241 245 249; /* text-navy-900 resolves to bright white */
+  --c-navy-800: 226 232 240;
+  --c-navy-700: 147 197 253;
+  --c-saffron-50: 58 36 16;
+  --c-saffron-300: 255 183 77;
+  --c-saffron-400: 255 166 77;
+  --c-saffron-600: 255 153 51;
+  --c-statutory-50: 18 48 26;
+  --c-statutory-300: 129 199 132;
+  --c-statutory-600: 76 196 64;
+  --c-statutory-800: 139 213 143;
+  --c-hazard-50: 58 22 24;
+  --c-hazard-300: 229 115 115;
+  --c-hazard-700: 248 113 113;
+  --c-ash-50: 20 31 44;
+  --c-ash-100: 29 42 58;
+  --c-ash-200: 29 42 58;
+  --c-ash-300: 43 59 78;
+  --c-ash-400: 100 116 139;
+
+  --surface: #121d2a;
+  --zebra: #16222f;
+  --table-head: #0f233a;
+
+  --canvas: #0b1420;
+  --line: #2b3b4e;
+  --line-soft: #223246;
+  --text: #f1f5f9;
+  --text-muted: #a0aec0;
+  --royal-900: #f1f5f9;
+  --royal-700: #93c5fd;
+  --royal-600: #8ab4f8;
+  --royal-100: #1d2d42;
+  --royal-50: #102436;
+  --ink-900: #f1f5f9;
+  --ink-600: #a0aec0;
+  --navy-900: #f1f5f9;
+  --navy-800: #e2e8f0;
+  --navy-700: #93c5fd;
+}
+
+/* ---------------------------------------------------------------- dark overrides
+ * Surfaces and status tints written with fixed Tailwind colours in page code.
+ */
+html.dark .bg-white,
+html.dark .hover\:bg-white:hover {
+  background-color: var(--surface);
+}
+html.dark .bg-white\/95 {
+  background-color: rgb(18 29 42 / 0.95);
+}
+html.dark .border-white {
+  border-color: var(--surface);
+}
+html.dark .bg-slate-50,
+html.dark .bg-slate-100 {
+  background-color: #16222f;
+}
+html.dark .bg-royal-50 {
+  background-color: #142233;
+}
+html.dark .bg-royal-100 {
+  background-color: #1e3a60;
+}
+html.dark .hover\:bg-royal-100:hover,
+html.dark .hover\:bg-royal-50:hover,
+html.dark .hover\:bg-slate-100:hover,
+html.dark nav a:hover {
+  background-color: #1e3a60 !important;
+  color: #ffffff !important;
+}
+html.dark .hover\:bg-royal-100:hover svg,
+html.dark .hover\:bg-royal-50:hover svg,
+html.dark nav a:hover svg {
+  color: #93c5fd !important;
+}
+html.dark .bg-red-50,
+html.dark .bg-red-100,
+html.dark .hover\:bg-red-50:hover,
+html.dark .bg-\[\#FDECEE\] {
+  background-color: #3a1618;
+}
+html.dark .border-red-200,
+html.dark .border-red-300 {
+  border-color: #6b2a2d;
+}
+html.dark .text-red-700,
+html.dark .text-red-600,
+html.dark .text-\[\#C62D3B\],
+html.dark .text-\[\#A1202D\],
+html.dark .text-\[\#8F1D28\] {
+  color: #ff8a8f;
+}
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-100 {
+  background-color: #12301a;
+}
+html.dark .border-emerald-200,
+html.dark .border-emerald-300 {
+  border-color: #2e6b35;
+}
+html.dark .text-emerald-800,
+html.dark .text-emerald-700,
+html.dark .text-emerald-600 {
+  color: #8bd58f;
+}
+html.dark .bg-orange-50,
+html.dark .bg-\[\#FDF1E4\] {
+  background-color: #3a2410;
+}
+html.dark .border-orange-200 {
+  border-color: #7a4818;
+}
+html.dark .text-orange-700,
+html.dark .text-orange-800,
+html.dark .text-\[\#6B5310\],
+html.dark .text-\[\#7A5F0F\],
+html.dark .text-\[\#7A3E00\] {
+  color: #ffc56b;
+}
+html.dark .bg-\[\#FFF8E1\] {
+  background-color: #2b2410;
+}
+html.dark .border-\[\#FFE082\] {
+  border-color: #6b5a1f;
+}
+/* Background fill overrides for dark mode */
+html.dark .bg-navy-900 {
+  background-color: #0b1e36;
+}
+html.dark .bg-royal-900 {
+  background-color: #0b1e36;
+}
+html.dark .bg-royal-700 {
+  background-color: #1d4ed8;
+  color: #ffffff;
+}
+html.dark .bg-royal-900\/40 {
+  background-color: rgb(0 0 0 / 0.55);
+}
+html.dark .hover\:bg-royal-900:hover,
+html.dark .hover\:bg-navy-900:hover,
+html.dark .hover\:bg-royal-700:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+html.dark .hover\:text-royal-900:hover {
+  color: #ffffff;
+}
+/* Explicit dark mode text rules ensuring high-contrast readability */
+html.dark .text-navy-900,
+html.dark .text-navy-800,
+html.dark .text-royal-900,
+html.dark .text-ink-900,
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #f1f5f9;
+}
+html.dark .text-royal-700,
+html.dark .text-navy-700,
+html.dark .text-blue-600,
+html.dark .text-blue-700 {
+  color: #93c5fd;
+}
+html.dark .text-ink-600,
+html.dark .text-ink-500,
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: #a0aec0;
+}
+html.dark select,
+html.dark input,
+html.dark textarea {
+  background-color: #121d2a;
+  color: #f1f5f9;
+  border-color: #2b3b4e;
+}
+html.dark select option {
+  background-color: #121d2a;
+  color: #f1f5f9;
 }
 
 /* Text size (A- / A / A+ in the portal ribbon) scales every rem-based size */
@@ -70,7 +306,7 @@ dd {
 /* Data tables & logs: navy header row, zebra rows, compact 1px dividers */
 main table thead tr,
 main table thead tr[class] {
-  background-color: var(--navy-900);
+  background-color: var(--table-head);
   color: #fff;
 }
 main table thead tr[class] th,
@@ -85,7 +321,7 @@ main table thead th svg {
   color: inherit;
 }
 main table tbody tr:nth-child(even):not([class*='bg-']) {
-  background-color: #f8f9fa;
+  background-color: var(--zebra);
 }
 main table tbody tr {
   border-bottom: 1px solid var(--line-soft);

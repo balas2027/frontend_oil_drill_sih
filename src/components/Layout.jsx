@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Keyboard,
   Sun,
+  Moon,
   WifiOff,
   Lock,
   Activity,
@@ -168,8 +169,8 @@ export default function Layout() {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuthStore();
   const {
-    fieldMode,
-    toggleFieldMode,
+    theme,
+    toggleTheme,
     online,
     lastSync,
     sidebarOpen,
@@ -444,13 +445,20 @@ export default function Layout() {
               <AlertsBell summary={alertSummary} />
               <button
                 type="button"
-                onClick={toggleFieldMode}
-                aria-pressed={fieldMode}
-                title={t('header.field_mode_hint')}
-                className={`${ctl} hidden sm:flex ${fieldMode ? 'border-saffron-600 bg-saffron-50' : ''}`}
+                onClick={toggleTheme}
+                aria-pressed={theme === 'dark'}
+                aria-label={theme === 'dark' ? t('header.theme_light') : t('header.theme_dark')}
+                title={theme === 'dark' ? t('header.theme_light') : t('header.theme_dark')}
+                className={`${ctl} hidden sm:flex`}
               >
-                <Sun className="w-4 h-4 text-saffron-600" aria-hidden="true" />
-                <span className="hidden lg:inline">{t('header.field_mode')}</span>
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-saffron-600" aria-hidden="true" />
+                ) : (
+                  <Moon className="w-4 h-4" aria-hidden="true" />
+                )}
+                <span className="hidden lg:inline">
+                  {theme === 'dark' ? t('header.theme_light_short') : t('header.theme_dark_short')}
+                </span>
               </button>
               <button
                 type="button"
@@ -555,11 +563,16 @@ export default function Layout() {
                 </select>
                 <button
                   type="button"
-                  onClick={toggleFieldMode}
-                  aria-pressed={fieldMode}
-                  className="border border-line rounded-md px-2 py-1.5 bg-white"
+                  onClick={toggleTheme}
+                  aria-pressed={theme === 'dark'}
+                  className="flex items-center gap-1 border border-line rounded-md px-2 py-1.5 bg-white"
                 >
-                  {t('header.field_mode')}
+                  {theme === 'dark' ? (
+                    <Sun className="w-3.5 h-3.5" aria-hidden="true" />
+                  ) : (
+                    <Moon className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                  {theme === 'dark' ? t('header.theme_light_short') : t('header.theme_dark_short')}
                 </button>
               </div>
             </div>

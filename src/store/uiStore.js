@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 const FIELD_KEY = 'nwis_field_mode';
+const THEME_KEY = 'nwis_theme';
 const SYNC_KEY = 'nwis_last_sync';
 const SIDEBAR_KEY = 'nwis_sidebar_open';
 const SYNC_THROTTLE_MS = 5000;
@@ -26,12 +27,40 @@ function applyFieldMode(on) {
   if (typeof document !== 'undefined') document.documentElement.classList.toggle('field-mode', on);
 }
 
+function initialTheme() {
+  const stored = read(THEME_KEY, null);
+  if (stored === 'light' || stored === 'dark') return stored;
+  try {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function applyTheme(theme) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.classList.toggle('dark', theme === 'dark');
+  root.style.colorScheme = theme; // native inputs, scrollbars
+}
+
 /** UI preferences and connectivity (Section 9 field mode, Section 11 offline banner). */
 export const useUiStore = create((set) => {
   const fieldMode = read(FIELD_KEY, false);
   const sidebarOpen = read(SIDEBAR_KEY, true);
   applyFieldMode(fieldMode);
+  const theme = initialTheme();
+  applyTheme(theme);
   return {
+    theme,
+    toggleTheme: () =>
+      set((s) => {
+        const next = s.theme === 'dark' ? 'light' : 'dark';
+        write(THEME_KEY, next);
+        applyTheme(next);
+        return { theme: next };
+      }),
+
     fieldMode,
     toggleFieldMode: () =>
       set((s) => {

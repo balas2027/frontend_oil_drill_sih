@@ -41,7 +41,11 @@
     "text_lg": "बड़ा पाठ",
     "system_badge": "निर्णय सहायता",
     "breadcrumb": "ब्रेडक्रंब",
-    "replays_running": "{{n}} लाइव रीप्ले चल रहे हैं"
+    "replays_running": "{{n}} लाइव रीप्ले चल रहे हैं",
+    "theme_dark": "डार्क थीम पर जाएँ",
+    "theme_light": "लाइट थीम पर जाएँ",
+    "theme_dark_short": "डार्क",
+    "theme_light_short": "लाइट"
   },
   "footer": {
     "version": "eRTMAC-NWIS v1.0.0 — ड्रिलिंग संचालन हेतु निर्णय सहायता प्रणाली",

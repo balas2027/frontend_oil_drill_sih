@@ -41,7 +41,11 @@
     "text_lg": "Larger text",
     "system_badge": "Decision support",
     "breadcrumb": "Breadcrumb",
-    "replays_running": "{{n}} live replay(s) running"
+    "replays_running": "{{n}} live replay(s) running",
+    "theme_dark": "Switch to dark theme",
+    "theme_light": "Switch to light theme",
+    "theme_dark_short": "Dark",
+    "theme_light_short": "Light"
   },
   "footer": {
     "version": "eRTMAC-NWIS v1.0.0 — Decision Support System for Drilling Operations",

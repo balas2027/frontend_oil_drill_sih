@@ -41,7 +41,11 @@
     "text_lg": "ডাঙৰ আখৰ",
     "system_badge": "সিদ্ধান্ত সহায়",
     "breadcrumb": "ব্ৰেডক্ৰাম্ব",
-    "replays_running": "{{n}}টা লাইভ ৰিপ্লে চলি আছে"
+    "replays_running": "{{n}}টা লাইভ ৰিপ্লে চলি আছে",
+    "theme_dark": "ডাৰ্ক থীমলৈ যাওক",
+    "theme_light": "লাইট থীমলৈ যাওক",
+    "theme_dark_short": "ডাৰ্ক",
+    "theme_light_short": "লাইট"
   },
   "footer": {
     "version": "eRTMAC-NWIS v1.0.0 — ড্ৰিলিং কাৰ্যৰ বাবে সিদ্ধান্ত সহায়ক ব্যৱস্থা",

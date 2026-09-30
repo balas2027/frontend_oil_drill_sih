@@ -9,34 +9,59 @@
  * existing screen adopts the new system without per-page rewrites.
  */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      // Every token is a CSS variable (RGB channels, see src/index.css) so the light and
+      // dark themes swap values in one place and opacity modifiers (bg-royal-700/60) still work.
       colors: {
-        // Institutional navy scale (was "royal")
         royal: {
-          50: '#F4F6F9', // app canvas (administrative paper tint)
-          100: '#E6EBF1', // selected / hover tint
-          500: '#4E5F7A', // muted navy (surface tint)
-          600: '#1F3A5C', // links, focus
-          700: '#0B1E36', // primary navy - buttons, active nav, table headers
-          900: '#0F2942', // headings / hover on primary
+          50: 'rgb(var(--c-royal-50) / <alpha-value>)',
+          100: 'rgb(var(--c-royal-100) / <alpha-value>)',
+          500: 'rgb(var(--c-royal-500) / <alpha-value>)',
+          600: 'rgb(var(--c-royal-600) / <alpha-value>)',
+          700: 'rgb(var(--c-royal-700) / <alpha-value>)',
+          900: 'rgb(var(--c-royal-900) / <alpha-value>)',
         },
-        // Tricolor saffron accent (was "gold")
         gold: {
-          100: '#FFF3E0',
-          500: '#E65100',
+          100: 'rgb(var(--c-gold-100) / <alpha-value>)',
+          500: 'rgb(var(--c-gold-500) / <alpha-value>)',
         },
         ink: {
-          600: '#5A6872', // captions, unit labels
-          900: '#16212D', // body text and metrics
+          600: 'rgb(var(--c-ink-600) / <alpha-value>)',
+          900: 'rgb(var(--c-ink-900) / <alpha-value>)',
         },
-        line: '#D1D7DC',
-        navy: { 900: '#0B1E36', 800: '#0F2942', 700: '#1F3A5C' },
-        saffron: { 50: '#FFF3E0', 300: '#FFB74D', 400: '#FF9933', 600: '#E65100' },
-        statutory: { 50: '#E8F5E9', 300: '#81C784', 600: '#138808', 800: '#1B5E20' },
-        hazard: { 50: '#FFEBEE', 300: '#E57373', 700: '#B71C1C' },
-        ash: { 50: '#F8F9FA', 100: '#ECEFF1', 200: '#E9ECEF', 300: '#E2E7EC', 400: '#CFD8DC' },
+        navy: {
+          900: 'rgb(var(--c-navy-900) / <alpha-value>)',
+          800: 'rgb(var(--c-navy-800) / <alpha-value>)',
+          700: 'rgb(var(--c-navy-700) / <alpha-value>)',
+        },
+        saffron: {
+          50: 'rgb(var(--c-saffron-50) / <alpha-value>)',
+          300: 'rgb(var(--c-saffron-300) / <alpha-value>)',
+          400: 'rgb(var(--c-saffron-400) / <alpha-value>)',
+          600: 'rgb(var(--c-saffron-600) / <alpha-value>)',
+        },
+        statutory: {
+          50: 'rgb(var(--c-statutory-50) / <alpha-value>)',
+          300: 'rgb(var(--c-statutory-300) / <alpha-value>)',
+          600: 'rgb(var(--c-statutory-600) / <alpha-value>)',
+          800: 'rgb(var(--c-statutory-800) / <alpha-value>)',
+        },
+        hazard: {
+          50: 'rgb(var(--c-hazard-50) / <alpha-value>)',
+          300: 'rgb(var(--c-hazard-300) / <alpha-value>)',
+          700: 'rgb(var(--c-hazard-700) / <alpha-value>)',
+        },
+        ash: {
+          50: 'rgb(var(--c-ash-50) / <alpha-value>)',
+          100: 'rgb(var(--c-ash-100) / <alpha-value>)',
+          200: 'rgb(var(--c-ash-200) / <alpha-value>)',
+          300: 'rgb(var(--c-ash-300) / <alpha-value>)',
+          400: 'rgb(var(--c-ash-400) / <alpha-value>)',
+        },
+        line: 'rgb(var(--c-line) / <alpha-value>)',
       },
       fontFamily: {
         // Body & tabular analytics: Noto Sans (Indic scripts); headings: Inter
